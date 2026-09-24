@@ -9,7 +9,7 @@
 |---|---|
 | Phase 1–3 Excel Analysis / Mapping / DB Design | ✅ [01_Excel_Analysis_Mapping_DB_Design.md](01_Excel_Analysis_Mapping_DB_Design.md) |
 | Database schema + RLS + Import engine + Analytics RPC | ✅ `database/migrations/001–003` — ทดสอบกับ Postgres (PGlite) แล้ว |
-| Historical migration (7,325 แถว Excel) | ✅ builder + ทดสอบแล้ว — รอรันบน Supabase |
+| Historical migration (7,325 แถว Excel) | ✅ builder + runner (`run_historical_seed.mjs`) ทดสอบแล้ว — รอรันบน Supabase |
 | Frontend (Vue 3 + Vite) ครบทุกเมนู | ✅ build ผ่าน |
 | Deploy | ⏳ รอ Supabase project ที่ใช้งานได้ (ดู §6) |
 
@@ -56,6 +56,7 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 | `database/migrations/002_functions.sql` | triggers (audit/stamp), views, `fact_filtered`, `rpc_dashboard`, `rpc_report`, import functions |
 | `database/migrations/003_rls.sql` | Row Level Security + grants (Admin / HR-Training / Viewer) |
 | `scripts/build_historical_seed.py` | อ่าน Excel → `database/seed/historical_*.sql` (gitignored — มีข้อมูลส่วนบุคคล) |
+| `scripts/run_historical_seed.mjs` | รัน seed เข้า Supabase ใน transaction เดียว + Verify กับ Excel (`npm run seed:run`) |
 | `src/lib/*` | config, auth, api (filter model เดียว), export (Excel/CSV/PDF), import mapping |
 | `src/views/*` | หน้าจอตามเมนู |
 | `.github/workflows/deploy.yml` | Build + Deploy GitHub Pages เมื่อ push `main` |
@@ -63,10 +64,16 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 ## 5. Runbook — ติดตั้ง Database (ครั้งแรก)
 
 1. Supabase Dashboard → **SQL Editor** → รันตามลำดับ: `001_schema.sql` → `002_functions.sql` → `003_rls.sql` (รันซ้ำได้ — idempotent)
-2. สร้างไฟล์ seed ในเครื่อง: `python3 scripts/build_historical_seed.py`
-3. รัน `database/seed/historical_01.sql` … `historical_05.sql` ตามลำดับใน SQL Editor
-   ผลที่ถูกต้อง (รวมทุก chunk): participants ใหม่ 7,322 · duplicate 3 · invalid 1 · sessions 398 · employees 967
-4. ตรวจ: `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
+2. สร้างไฟล์ seed ในเครื่อง: `npm run seed:build` (= `python3 scripts/build_historical_seed.py`)
+3. Import ข้อมูลเก่า ด้วย `scripts/run_historical_seed.mjs` — รันทุก chunk ใน **transaction เดียว** (สำเร็จทั้งหมดหรือไม่เปลี่ยนอะไรเลย) แล้ว Verify กับตัวเลขจาก Excel อัตโนมัติ
+   * Connection string: Supabase › **Connect** › **Session pooler** (มีรหัสผ่าน DB — ส่งผ่าน env เท่านั้น ห้าม commit/บันทึกลงไฟล์)
+   * `DATABASE_URL='postgresql://...' npm run seed:run -- --dry-run` → รัน + ตรวจ + ROLLBACK (ไม่เปลี่ยนข้อมูล)
+   * `DATABASE_URL='postgresql://...' npm run seed:run` → รัน + ตรวจ + COMMIT (ถ้า Verify ไม่ผ่านจะ ROLLBACK เอง)
+   * ถ้ามีข้อมูลอยู่แล้ว script จะหยุดโดยไม่แก้อะไร; `--allow-existing` = รันซ้ำ (ทุกแถวเป็น Duplicate)
+   ผลที่ถูกต้อง: total 7,336 · imported 7,322 · duplicate 3 · invalid 1 (Teambuilding BU2) · sessions 398 · employees 967 · courses 308
+   Session ที่มีผู้เข้าอบรม ต่อปี 2566–2569 = 135 / 122 / 71 / 60 (ตรง Excel Dashboard) · ทุก session รวม session-only = 136 / 124 / 71 / 67
+4. ตรวจเพิ่ม (SQL Editor): `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
+   (ทางเลือก: รัน `historical_01–05.sql` ใน SQL Editor ทีละไฟล์ — ผลเหมือนกัน แต่ไฟล์ใหญ่ ~1.2 MB/ไฟล์)
 5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ; คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ System › Users
 6. Authentication → URL Configuration: ใส่ Site URL = URL ของเว็บ (GitHub Pages) เพื่อให้ลิงก์ยืนยันอีเมล/รีเซ็ตรหัสผ่านทำงาน
 
