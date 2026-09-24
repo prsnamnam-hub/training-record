@@ -22,10 +22,11 @@ const SEED = join(ROOT, 'database', 'seed')
 const DRY = process.argv.includes('--dry-run')
 const ALLOW_EXISTING = process.argv.includes('--allow-existing')
 
-// Either a full DATABASE_URL, or just the database password (SUPABASE_DB_PASSWORD) → direct connection.
+// Either a full DATABASE_URL, or just the database password (SUPABASE_DB_PASSWORD) → Session pooler (IPv4;
+// the direct db.<ref>.supabase.co host is IPv6-only and unreachable on many networks).
 const PROJECT_REF = 'lcouhsgvzsqhppqedpzk'
 const DB_URL = process.env.DATABASE_URL || (process.env.SUPABASE_DB_PASSWORD
-  ? `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD)}@db.${PROJECT_REF}.supabase.co:5432/postgres`
+  ? `postgresql://postgres.${PROJECT_REF}:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD)}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`
   : '')
 if (!DB_URL) {
   console.error('Set DATABASE_URL (Supabase › Connect) or SUPABASE_DB_PASSWORD (Project Settings › Database).')
