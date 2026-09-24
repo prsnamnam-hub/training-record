@@ -11,7 +11,9 @@
 | Database schema + RLS + Import engine + Analytics RPC | ✅ `database/migrations/001–003` — ทดสอบกับ Postgres (PGlite) แล้ว |
 | Historical migration (7,325 แถว Excel) | ✅ builder + runner (`run_historical_seed.mjs`) ทดสอบแล้ว — รอรันบน Supabase |
 | Frontend (Vue 3 + Vite) ครบทุกเมนู | ✅ build ผ่าน |
-| Deploy | ⏳ รอ Supabase project ที่ใช้งานได้ (ดู §6) |
+| Supabase project | ✅ `asw-training-record` (ref `lcouhsgvzsqhppqedpzk`, Singapore) — migration 001–003 |
+| Deploy | ✅ https://prsnamnam-hub.github.io/training-record/ (GitHub Actions, push `main`) |
+| Auth URL Configuration | ✅ Site URL = URL ข้างบน · Redirect URLs: `https://prsnamnam-hub.github.io/training-record/**`, `http://localhost:5173/**` |
 
 ## 2. Architecture
 
@@ -82,7 +84,9 @@ Import ไฟล์ Excel เดิมซ้ำ (ผ่าน Import Center ห�
 ## 6. Deployment
 
 * Frontend: GitHub Pages ผ่าน GitHub Actions (`deploy.yml`) — Settings › Pages › Source = **GitHub Actions**
-* ค่า public (ไม่ใช่ความลับ): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — ตั้งใน `src/lib/config.js` (DEFAULTS) หรือ Repository variables
+* ค่า public (ไม่ใช่ความลับ): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (= Publishable key `sb_publishable_…`)
+  * Production: GitHub › Settings › Secrets and variables › Actions › **Variables** (ตั้งแล้ว)
+  * Local dev: `.env.local` (gitignored) — `src/lib/config.js` DEFAULTS เว้นว่างไว้
 * **ห้าม** ใส่ `service_role` key ในโค้ด/Repository
 * Router เป็น hash mode (`/#/dashboard`) → ไม่ต้องตั้ง SPA fallback
 * หลังเปลี่ยนค่า env ต้อง build/deploy ใหม่ (ค่าถูกฝังตอน build)
