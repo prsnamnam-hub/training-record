@@ -7,6 +7,9 @@
 -- historical data can never be removed through the API (RULE 3).
 -- ============================================================================
 
+-- Policies wrap helper calls in (select ...) so Postgres evaluates them once per query (initPlan)
+-- instead of once per row of every joined table — required for report/dashboard performance.
+
 -- base privileges (Supabase grants these by default; explicit here so the file is self-contained)
 grant usage on schema public to authenticated, service_role;
 grant select, insert, update on all tables in schema public to authenticated;
@@ -24,11 +27,11 @@ begin
   loop
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists p_select on public.%I', t);
-    execute format('create policy p_select on public.%I for select to authenticated using (public.can_view())', t);
+    execute format('create policy p_select on public.%I for select to authenticated using ((select public.can_view()))', t);
     execute format('drop policy if exists p_insert on public.%I', t);
-    execute format('create policy p_insert on public.%I for insert to authenticated with check (public.can_edit())', t);
+    execute format('create policy p_insert on public.%I for insert to authenticated with check ((select public.can_edit()))', t);
     execute format('drop policy if exists p_update on public.%I', t);
-    execute format('create policy p_update on public.%I for update to authenticated using (public.can_edit()) with check (public.can_edit())', t);
+    execute format('create policy p_update on public.%I for update to authenticated using ((select public.can_edit())) with check ((select public.can_edit()))', t);
     execute format('revoke delete on public.%I from anon, authenticated', t);
     execute format('revoke all on public.%I from anon', t);
   end loop;
@@ -36,16 +39,16 @@ end $$;
 
 -- settings: only admins may change
 drop policy if exists p_insert on public.app_settings;
-create policy p_insert on public.app_settings for insert to authenticated with check (public.is_admin());
+create policy p_insert on public.app_settings for insert to authenticated with check ((select public.is_admin()));
 drop policy if exists p_update on public.app_settings;
-create policy p_update on public.app_settings for update to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy p_update on public.app_settings for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
 
 -- evaluations and budgets may be removed (they are not historical training records)
 grant delete on public.training_evaluations, public.training_budgets to authenticated;
 drop policy if exists p_delete on public.training_evaluations;
-create policy p_delete on public.training_evaluations for delete to authenticated using (public.can_edit());
+create policy p_delete on public.training_evaluations for delete to authenticated using ((select public.can_edit()));
 drop policy if exists p_delete on public.training_budgets;
-create policy p_delete on public.training_budgets for delete to authenticated using (public.can_edit());
+create policy p_delete on public.training_budgets for delete to authenticated using ((select public.can_edit()));
 
 -- profiles: everyone sees their own; admins see and manage all
 alter table public.profiles enable row level security;
@@ -66,7 +69,7 @@ alter table public.audit_logs enable row level security;
 revoke all on public.audit_logs from anon;
 revoke insert, update, delete on public.audit_logs from authenticated;
 drop policy if exists p_select on public.audit_logs;
-create policy p_select on public.audit_logs for select to authenticated using (public.is_admin());
+create policy p_select on public.audit_logs for select to authenticated using ((select public.is_admin()));
 
 -- views run with the caller's RLS (security_invoker)
 revoke all on public.v_session_cost, public.v_session_summary, public.v_participant_fact from anon;

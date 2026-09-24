@@ -75,7 +75,8 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
    * ถ้ามีข้อมูลอยู่แล้ว script จะหยุดโดยไม่แก้อะไร; `--allow-existing` = รันซ้ำ (ทุกแถวเป็น Duplicate)
    ผลที่ถูกต้อง: total 7,336 · imported 7,322 · duplicate 3 · invalid 1 (Teambuilding BU2) · sessions 398 · employees 967 · courses 308
    Session ที่มีผู้เข้าอบรม ต่อปี 2566–2569 = 135 / 122 / 71 / 60 (ตรง Excel Dashboard) · ทุก session รวม session-only = 136 / 124 / 71 / 67
-4. ตรวจเพิ่ม (SQL Editor): `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
+4. **หลัง Import จำนวนมากทุกครั้ง ให้รัน `analyze;`** (SQL Editor) — ถ้าไม่รัน สถิติตารางจะเก่า ทำให้ Dashboard/Report ช้าจน timeout (ทดสอบแล้ว: 1.8s → 0.5s ในเครื่อง)
+   ตรวจเพิ่ม (SQL Editor): `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
    (ทางเลือก: รัน `historical_01–05.sql` ใน SQL Editor ทีละไฟล์ — ผลเหมือนกัน แต่ไฟล์ใหญ่ ~1.2 MB/ไฟล์)
    * วิธีที่ใช้จริงครั้งแรก (ไม่ต้องใช้รหัสผ่าน DB): `npx supabase login` แล้ว `supabase db query --linked --project-ref <ref> -f …`
      Management API รับได้ ~1 MB/request → อัปโหลด seed เป็นชิ้น ~250 แถวเข้า schema ชั่วคราว `import_staging` (revoke จาก anon/authenticated)
