@@ -61,6 +61,7 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 | `scripts/run_historical_seed.mjs` | รัน seed เข้า Supabase ใน transaction เดียว + Verify กับ Excel (`npm run seed:run`) |
 | `src/lib/*` | config, auth, api (filter model เดียว), export (Excel/CSV/PDF), import mapping |
 | `src/views/*` | หน้าจอตามเมนู |
+| `supabase/functions/admin-users/` | Edge Function: Admin สร้างผู้ใช้ + ตั้งรหัสผ่าน (service_role อยู่ฝั่ง server เท่านั้น) |
 | `.github/workflows/deploy.yml` | Build + Deploy GitHub Pages เมื่อ push `main` |
 
 ## 5. Runbook — ติดตั้ง Database (ครั้งแรก)
@@ -76,7 +77,12 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
    Session ที่มีผู้เข้าอบรม ต่อปี 2566–2569 = 135 / 122 / 71 / 60 (ตรง Excel Dashboard) · ทุก session รวม session-only = 136 / 124 / 71 / 67
 4. ตรวจเพิ่ม (SQL Editor): `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
    (ทางเลือก: รัน `historical_01–05.sql` ใน SQL Editor ทีละไฟล์ — ผลเหมือนกัน แต่ไฟล์ใหญ่ ~1.2 MB/ไฟล์)
-5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ; คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ System › Users
+5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ (Admin = สิทธิ์สูงสุด / superadmin); คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ System › Users
+   * วิธีที่แนะนำสำหรับคนแรก: Supabase › Authentication › Users › **Add user › Create new user** (ติ๊ก Auto Confirm) — ไม่ต้องรออีเมลยืนยัน
+   * หลังจากนั้น Admin เพิ่มผู้ใช้พร้อมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ได้ที่ System › Users (Edge Function `admin-users`)
+5.1 Deploy Edge Function (ครั้งแรก/เมื่อแก้): `npx supabase login` แล้ว
+   `npx supabase functions deploy admin-users --project-ref lcouhsgvzsqhppqedpzk --no-verify-jwt --use-api`
+   (function ตรวจ JWT + role Admin เอง; ใช้ `SUPABASE_SERVICE_ROLE_KEY` ที่ Supabase ใส่ให้ฝั่ง server — ไม่มี secret ใน repo/browser)
 6. Authentication → URL Configuration: ใส่ Site URL = URL ของเว็บ (GitHub Pages) เพื่อให้ลิงก์ยืนยันอีเมล/รีเซ็ตรหัสผ่านทำงาน
 
 Import ไฟล์ Excel เดิมซ้ำ (ผ่าน Import Center หรือ seed) → ทุกแถวเป็น Duplicate ไม่มีข้อมูลซ้ำ

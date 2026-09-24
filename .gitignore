@@ -12,3 +12,6 @@ dist/
 !.env.example
 # generated historical seed (employee personal data)
 database/seed/
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
