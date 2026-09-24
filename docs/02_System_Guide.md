@@ -9,7 +9,7 @@
 |---|---|
 | Phase 1–3 Excel Analysis / Mapping / DB Design | ✅ [01_Excel_Analysis_Mapping_DB_Design.md](01_Excel_Analysis_Mapping_DB_Design.md) |
 | Database schema + RLS + Import engine + Analytics RPC | ✅ `database/migrations/001–003` — ทดสอบกับ Postgres (PGlite) แล้ว |
-| Historical migration (7,325 แถว Excel) | ✅ builder + runner (`run_historical_seed.mjs`) ทดสอบแล้ว — รอรันบน Supabase |
+| Historical migration (7,325 แถว Excel) | ✅ **Import เข้า Supabase แล้ว 24-Sep-2026** — 7,336 rows · 7,322 imported · 3 duplicate · 1 invalid · 0 failed · 398 sessions · 967 employees · 308 courses |
 | Frontend (Vue 3 + Vite) ครบทุกเมนู | ✅ build ผ่าน |
 | Supabase project | ✅ `asw-training-record` (ref `lcouhsgvzsqhppqedpzk`, Singapore) — migration 001–003 |
 | Deploy | ✅ https://prsnamnam-hub.github.io/training-record/ (GitHub Actions, push `main`) |
@@ -77,6 +77,9 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
    Session ที่มีผู้เข้าอบรม ต่อปี 2566–2569 = 135 / 122 / 71 / 60 (ตรง Excel Dashboard) · ทุก session รวม session-only = 136 / 124 / 71 / 67
 4. ตรวจเพิ่ม (SQL Editor): `select fiscal_year+543, count(*) from training_sessions group by 1 order by 1;` และ `select count(*) from training_participants;`
    (ทางเลือก: รัน `historical_01–05.sql` ใน SQL Editor ทีละไฟล์ — ผลเหมือนกัน แต่ไฟล์ใหญ่ ~1.2 MB/ไฟล์)
+   * วิธีที่ใช้จริงครั้งแรก (ไม่ต้องใช้รหัสผ่าน DB): `npx supabase login` แล้ว `supabase db query --linked --project-ref <ref> -f …`
+     Management API รับได้ ~1 MB/request → อัปโหลด seed เป็นชิ้น ~250 แถวเข้า schema ชั่วคราว `import_staging` (revoke จาก anon/authenticated)
+     → รัน `import_training_rows` ต่อไฟล์ใน transaction เดียว + ตรวจตัวเลข (ไม่ตรง = rollback) → `drop schema import_staging cascade`
 5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ (Admin = สิทธิ์สูงสุด / superadmin); คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ System › Users
    * วิธีที่แนะนำสำหรับคนแรก: Supabase › Authentication › Users › **Add user › Create new user** (ติ๊ก Auto Confirm) — ไม่ต้องรออีเมลยืนยัน
    * หลังจากนั้น Admin เพิ่มผู้ใช้พร้อมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ได้ที่ System › Users (Edge Function `admin-users`)
