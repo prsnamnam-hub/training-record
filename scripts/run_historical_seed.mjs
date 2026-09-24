@@ -6,8 +6,9 @@
 // scripts/build_historical_seed.py). Uses the same engine as the Import Center
 // (public.import_training_rows), so re-running only produces duplicates, never duplicate data.
 //
-// Usage (connection string = Supabase › Connect › Session pooler; contains the DB password,
-// pass it via env only — never commit it):
+// Usage (credentials via env only — never commit them):
+//   read -rs "SUPABASE_DB_PASSWORD?DB password: " && export SUPABASE_DB_PASSWORD && npm run seed:run -- --dry-run
+// or with a full connection string (Supabase › Connect):
 //   DATABASE_URL='postgresql://...' node scripts/run_historical_seed.mjs --dry-run   # run + verify + ROLLBACK
 //   DATABASE_URL='postgresql://...' node scripts/run_historical_seed.mjs             # run + verify + COMMIT
 // Flags: --allow-existing  continue even if training data already exists (re-run; rows become duplicates)
@@ -21,8 +22,17 @@ const SEED = join(ROOT, 'database', 'seed')
 const DRY = process.argv.includes('--dry-run')
 const ALLOW_EXISTING = process.argv.includes('--allow-existing')
 
-if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is not set (Supabase › Connect › Session pooler connection string).')
+// Either a full DATABASE_URL, or just the database password (SUPABASE_DB_PASSWORD) → direct connection.
+const PROJECT_REF = 'lcouhsgvzsqhppqedpzk'
+const DB_URL = process.env.DATABASE_URL || (process.env.SUPABASE_DB_PASSWORD
+  ? `postgresql://postgres:${encodeURIComponent(process.env.SUPABASE_DB_PASSWORD)}@db.${PROJECT_REF}.supabase.co:5432/postgres`
+  : '')
+if (!DB_URL) {
+  console.error('Set DATABASE_URL (Supabase › Connect) or SUPABASE_DB_PASSWORD (Project Settings › Database).')
+  process.exit(1)
+}
+if (DB_URL.includes('[YOUR-PASSWORD]')) {
+  console.error('The connection string still contains [YOUR-PASSWORD] — replace it with the database password.')
   process.exit(1)
 }
 
@@ -49,7 +59,7 @@ const expected = {
 const files = readdirSync(SEED).filter((f) => /^historical_\d+\.sql$/.test(f)).sort()
 if (!files.length) { console.error('No database/seed/historical_*.sql — run: npm run seed:build'); process.exit(1) }
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+const client = new pg.Client({ connectionString: DB_URL, ssl: { rejectUnauthorized: false } })
 const q = async (sql) => (await client.query(sql)).rows
 const HIST = `data_source = 'Historical Excel' and deleted_at is null`
 
@@ -94,7 +104,10 @@ async function verify() {
   return ok
 }
 
-await client.connect()
+try { await client.connect() } catch (e) {
+  console.error(`\nCannot connect to the database: ${e.message}\nNothing was changed. Check the database password (Project Settings › Database) and try again.`)
+  process.exit(1)
+}
 try {
   const before = await counts()
   console.log('Database before:', before)
