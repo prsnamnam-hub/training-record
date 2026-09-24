@@ -81,8 +81,8 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
    * วิธีที่แนะนำสำหรับคนแรก: Supabase › Authentication › Users › **Add user › Create new user** (ติ๊ก Auto Confirm) — ไม่ต้องรออีเมลยืนยัน
    * หลังจากนั้น Admin เพิ่มผู้ใช้พร้อมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ได้ที่ System › Users (Edge Function `admin-users`)
 5.1 Deploy Edge Function (ครั้งแรก/เมื่อแก้): `npx supabase login` แล้ว
-   `npx supabase functions deploy admin-users --project-ref lcouhsgvzsqhppqedpzk --no-verify-jwt --use-api`
-   (function ตรวจ JWT + role Admin เอง; ใช้ `SUPABASE_SERVICE_ROLE_KEY` ที่ Supabase ใส่ให้ฝั่ง server — ไม่มี secret ใน repo/browser)
+   `npx supabase functions deploy admin-users --project-ref lcouhsgvzsqhppqedpzk --use-api`
+   (Gateway ตรวจ JWT + function ตรวจ role Admin อีกชั้น; ใช้ `SUPABASE_SERVICE_ROLE_KEY` ที่ Supabase ใส่ให้ฝั่ง server — ไม่มี secret ใน repo/browser)
 6. Authentication → URL Configuration: ใส่ Site URL = URL ของเว็บ (GitHub Pages) เพื่อให้ลิงก์ยืนยันอีเมล/รีเซ็ตรหัสผ่านทำงาน
 
 Import ไฟล์ Excel เดิมซ้ำ (ผ่าน Import Center หรือ seed) → ทุกแถวเป็น Duplicate ไม่มีข้อมูลซ้ำ
