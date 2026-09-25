@@ -1,0 +1,18 @@
+# Never upload employee personal data or local secrets to Vercel
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+~$*
+database/seed/
+.env
+.env.*
+!.env.example
+# not needed for the web build
+node_modules/
+dist/
+supabase/
+scripts/
+docs/
+.claude/
+.DS_Store

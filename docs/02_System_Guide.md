@@ -13,7 +13,8 @@
 | Frontend (Vue 3 + Vite) ครบทุกเมนู | ✅ build ผ่าน |
 | Supabase project | ✅ `asw-training-record` (ref `lcouhsgvzsqhppqedpzk`, Singapore) — migration 001–003 |
 | Deploy | ✅ https://prsnamnam-hub.github.io/training-record/ (GitHub Actions, push `main`) |
-| Auth URL Configuration | ✅ Site URL = URL ข้างบน · Redirect URLs: `https://prsnamnam-hub.github.io/training-record/**`, `http://localhost:5173/**` |
+| Deploy (Vercel) | ✅ https://asw-training-record.vercel.app — project `asw-training-record` (team training-system-n), Git-connected: push `main` = production, other branches = preview |
+| Auth URL Configuration | ✅ Site URL = GitHub Pages URL · Redirect URLs: `https://prsnamnam-hub.github.io/training-record/**`, `https://asw-training-record.vercel.app/**`, `http://localhost:5173/**` |
 
 ## 2. Architecture
 
@@ -100,6 +101,7 @@ Import ไฟล์ Excel เดิมซ้ำ (ผ่าน Import Center ห�
   * Local dev: `.env.local` (gitignored) — `src/lib/config.js` DEFAULTS เว้นว่างไว้
 * **ห้าม** ใส่ `service_role` key ในโค้ด/Repository
 * Router เป็น hash mode (`/#/dashboard`) → ไม่ต้องตั้ง SPA fallback
+* Vercel: env `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` ตั้งใน Project › Settings › Environment Variables (Production + Preview) · `.vercelignore` กันไม่ให้อัปโหลด Excel / `database/seed/` / `.env*` (ตรวจแล้ว: 404 บน Vercel) · deploy มือ: `npx vercel deploy --prod`
 * หลังเปลี่ยนค่า env ต้อง build/deploy ใหม่ (ค่าถูกฝังตอน build)
 
 ## 7. Roles
