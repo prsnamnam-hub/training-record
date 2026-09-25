@@ -2,7 +2,7 @@
   <div class="login-wrap">
     <div class="login-card">
       <div class="logo">
-        <div class="wordmark">ASSET WISE</div>
+        <img class="logo-img" :src="logo" alt="ASSET WISE" />
         <div class="small muted" style="margin-top:6px">{{ APP_NAME }} — {{ APP_TAGLINE }}</div>
       </div>
       <div class="tabs">
@@ -30,6 +30,8 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { APP_NAME, APP_TAGLINE } from '../lib/config'
 import { signIn, signUp, resetPassword } from '../lib/auth'
+
+const logo = import.meta.env.BASE_URL + 'logo-assetwise.png'
 
 const router = useRouter()
 const route = useRoute()

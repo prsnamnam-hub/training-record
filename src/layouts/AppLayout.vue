@@ -2,7 +2,7 @@
   <div class="shell">
     <aside class="sidebar" :class="{ open: menuOpen }" @click="menuOpen = false">
       <div class="brand">
-        <div class="wordmark">ASSET WISE</div>
+        <img class="logo" :src="logoWhite" alt="ASSET WISE" />
         <small>Training Record</small>
       </div>
       <nav class="nav">
@@ -43,6 +43,7 @@ import { APP_NAME, APP_TAGLINE } from '../lib/config'
 import { auth, role, ROLE_LABEL, signOut, canEdit, isAdmin } from '../lib/auth'
 import { MENU, sectionOf } from '../lib/menu'
 
+const logoWhite = import.meta.env.BASE_URL + 'logo-assetwise-white.png'
 const route = useRoute()
 const router = useRouter()
 const q = ref('')

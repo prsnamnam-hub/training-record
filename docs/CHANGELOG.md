@@ -17,4 +17,4 @@ _Append-only. Newest entries at the bottom._
 
 ## 2026-09-25
 - Navigation simplified: sidebar has 6 categories only (Dashboard, Training, Expense, Reports, Master Data, Settings) with no icons; each category's pages are tabs above the content (`src/lib/menu.js`). No page or feature removed — Export moved under Reports, Import Excel under Master Data; "System" renamed "Settings" (its settings page is now the "General" tab).
-- Logo replaced with the "ASSET WISE" wordmark (sidebar and login page).
+- Logo: official ASSET WISE logo (`public/logo-assetwise.png` navy for the login page, `logo-assetwise-white.png` for the dark sidebar — transparent PNGs made from the supplied logo).
