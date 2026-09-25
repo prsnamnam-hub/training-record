@@ -247,9 +247,11 @@ body.pdf-exporting .print-only { display: block !important; }
 .ms-trigger:hover { border-color: #c5cdd8; }
 .ms-trigger::after { content: ''; position: absolute; right: 13px; top: 50%; width: 6px; height: 6px; margin-top: -5px; border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3); transform: rotate(45deg); }
 .ms-pop { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; min-width: 100%; width: max-content; max-width: 380px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg); }
-.ms-pop input { width: calc(100% - 16px); margin: 8px; }
+.ms-pop > input { width: calc(100% - 16px); margin: 8px; }
 .ms-list { max-height: 280px; overflow: auto; padding: 0 6px 6px; }
-.ms-list label { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.ms-list label { display: flex; gap: 8px; align-items: flex-start; justify-content: flex-start; text-align: left; padding: 6px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--ink); font-weight: 400; }
+.ms-list label input { flex: none; width: auto; margin: 3px 0 0; }
+.ms-list label span { flex: 1; min-width: 0; }
 .ms-list label:hover { background: var(--brand-50); }
 .ms-actions { display: flex; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--line-2); font-size: 12px; }
 

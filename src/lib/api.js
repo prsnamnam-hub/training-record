@@ -34,6 +34,10 @@ let _options = null
 export async function filterOptions(force = false) {
   if (_options && !force) return _options
   _options = await must(supabase.rpc('rpc_filter_options'))
+  // two departments can share a name (different codes, e.g. Accounting 12AC / WHB) → show the code so pickers can tell them apart
+  const seen = {}
+  for (const d of _options.departments || []) seen[d.name] = (seen[d.name] || 0) + 1
+  for (const d of _options.departments || []) if (seen[d.name] > 1 && d.code) d.name = `${d.name} (${d.code})`
   return _options
 }
 export const invalidateOptions = () => { _options = null }
