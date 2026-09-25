@@ -57,7 +57,8 @@
       </details>
     </div>
 
-    <div v-if="error" class="alert err mt">{{ error }}</div>
+    <div v-if="error" class="alert err mt">{{ error }}
+      <RouterLink v-if="dupId" :to="`/training/sessions/${dupId}`" class="btn sm" style="margin-left:8px">เปิดรายการเดิม ›</RouterLink></div>
     <div class="row mt" style="justify-content:flex-end">
       <button class="btn primary" :disabled="saving" @click="save">
         {{ saving ? 'กำลังบันทึก...' : isEdit ? 'บันทึก' : 'บันทึก และเพิ่มผู้เข้าอบรม ›' }}</button>
@@ -72,7 +73,7 @@ import ExpenseLines from '../../components/ExpenseLines.vue'
 import { supabase, must } from '../../lib/supabase'
 import { filterOptions, invalidateOptions, getOne, insertRow, updateRow, insertRows } from '../../lib/api'
 import { STATUS } from '../../lib/constants'
-import { courseKey, normalizeCourseName } from '../../lib/format'
+import { courseKey, normalizeCourseName, dateTH } from '../../lib/format'
 import { toastOk } from '../../lib/toast'
 
 const route = useRoute(); const router = useRouter()
@@ -87,6 +88,7 @@ const providerName = ref('')
 const expenses = ref([])
 const saving = ref(false)
 const error = ref('')
+const dupId = ref(null)
 const form = ref({ session_name: '', start_date: '', end_date: '', start_time: '09:00', end_time: '16:00', training_hours: null,
   training_type_id: null, location: '', status: 'Scheduled', budget_amount: null, remark: '' })
 const batchNo = ref('')
@@ -131,7 +133,7 @@ async function resolveByName(table, name, extra = {}) {
 }
 
 async function save() {
-  error.value = ''
+  error.value = ''; dupId.value = null
   if (!courseName.value.trim()) { error.value = 'กรุณาระบุหลักสูตร'; return }
   if (!form.value.start_date) { error.value = 'กรุณาระบุวันที่อบรม'; return }
   if (form.value.end_date && form.value.end_date < form.value.start_date) { error.value = 'วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม'; return }
@@ -160,6 +162,16 @@ async function save() {
       end_date: form.value.end_date || form.value.start_date,
       fiscal_year: Number(form.value.start_date.slice(0, 4)),
       start_time: form.value.start_time || null, end_time: form.value.end_time || null }
+    // same course + name + date + type already recorded? (DB unique rule training_sessions_natural_uq) → say so in Thai
+    let dq = supabase.from('training_sessions').select('id').eq('course_id', courseId).eq('session_name', payload.session_name)
+      .eq('start_date', payload.start_date).is('deleted_at', null).is('legacy_course_id', null)
+    dq = payload.training_type_id ? dq.eq('training_type_id', payload.training_type_id) : dq.is('training_type_id', null)
+    const same = (await must(dq)).find((x) => String(x.id) !== String(id))
+    if (same) {
+      dupId.value = same.id
+      error.value = `มีการบันทึก "${payload.session_name}" วันที่ ${dateTH(payload.start_date)} ประเภทเดียวกันไว้แล้ว — เปิดรายการเดิมเพื่อเพิ่มผู้เข้าอบรม หรือเปลี่ยนรุ่น / วันที่`
+      return
+    }
     let sessionId = id
     if (isEdit.value) await updateRow('training_sessions', id, payload)
     else {
@@ -169,7 +181,9 @@ async function save() {
     invalidateOptions()
     toastOk(isEdit.value ? 'บันทึกเรียบร้อย' : 'บันทึกข้อมูลหลักสูตรแล้ว — ต่อไปเพิ่มผู้เข้าอบรม')
     router.replace(isEdit.value ? `/training/sessions/${sessionId}` : `/training/sessions/${sessionId}?step=2`)
-  } catch (e) { error.value = e.message } finally { saving.value = false }
+  } catch (e) {
+    error.value = /duplicate key|natural_uq/.test(e.message) ? 'มีหลักสูตร / รุ่น / วันที่ / ประเภทนี้ในระบบแล้ว — เปลี่ยนรุ่นหรือวันที่ หรือเปิดรายการเดิม' : e.message
+  } finally { saving.value = false }
 }
 
 onMounted(async () => {
