@@ -13,7 +13,7 @@ async function render() {
   if (!chart.value) chart.value = echarts.init(el.value, null, { renderer: 'canvas' })
   chart.value.setOption({
     color: PALETTE,
-    textStyle: { fontFamily: "'IBM Plex Sans Thai', Inter, sans-serif", color: '#4b5768' },
+    textStyle: { fontFamily: "Inter, 'Noto Sans Thai', sans-serif", color: '#4b5768' },
     grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
     tooltip: { trigger: 'axis', confine: true },
     ...props.option,
