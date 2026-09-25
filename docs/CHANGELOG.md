@@ -47,3 +47,4 @@ _Append-only. Newest entries at the bottom._
 - Browser tab icon = the ASSET WISE "W" (white on navy): `favicon.png` 64, `apple-touch-icon.png` 180, `icon-512.png`; old "A" favicon.svg removed. Monthly report header uses the ASSET WISE logo.
 - Login: brand header back to the earlier style (no panel around logo/text, light top fade with text glow); background re-graded to daylight (brighter exposure, open shadows, blue sky) while keeping the 2400 px sharpened version.
 - Login background replaced with the owner-supplied daytime photo of the office (script slogan cropped off so it does not clash with the logo; 2400 px Lanczos upscale + light sharpen). Header kept in the original style (thin white fade behind logo/text).
+- Browser tab / home-screen icon changed to the full stacked ASSET WISE logo (navy on white rounded square, extracted from the owner-supplied logo image) instead of the "W" mark.
