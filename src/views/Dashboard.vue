@@ -1,164 +1,118 @@
 <template>
   <div ref="page">
-    <PageHeader title="Dashboard"
-      :subtitle="`รายงานสรุปการฝึกอบรม · ช่วงสะสม ม.ค. – ${TH_MONTHS[month - 1]} ${be(year)}`">
-      <ExportMenu :handler="doExport" />
-    </PageHeader>
-
-    <div class="card no-print">
-      <div class="filterbar">
-        <div class="field"><label>ปีที่รายงาน (พ.ศ.)</label>
-          <select v-model.number="year" class="input"><option v-for="y in years" :key="y" :value="y">{{ be(y) }}</option></select></div>
-        <div class="field"><label>เดือนที่รายงาน</label>
-          <select v-model.number="month" class="input"><option v-for="(m, i) in TH_MONTHS" :key="i" :value="i + 1">{{ m }}</option></select></div>
+    <div class="dash-head no-print">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="muted">ภาพรวมการฝึกอบรม ปี {{ be(year) }} · สะสม ม.ค. – {{ TH_MONTHS[month - 1] }}</p>
       </div>
-      <div class="mt"><FilterBar v-model="filters" :fields="['departments', 'sections', 'training_types', 'categories', 'courses', 'companies', 'level_groups']" /></div>
+      <div class="dash-controls">
+        <select v-model.number="year" class="input" aria-label="ปี"><option v-for="y in years" :key="y" :value="y">ปี {{ be(y) }}</option></select>
+        <select v-model.number="month" class="input" aria-label="เดือน"><option v-for="(m, i) in TH_MONTHS" :key="i" :value="i + 1">ถึงเดือน {{ m }}</option></select>
+        <ExportMenu :handler="doExport" />
+      </div>
     </div>
+    <div class="no-print mb"><FilterBar v-model="filters" :primary="0" :fields="['departments', 'training_types', 'categories', 'courses', 'companies', 'level_groups', 'sections']" /></div>
     <div class="print-only"><h2>ASW Training Record Dashboard — {{ TH_MONTHS_FULL[month - 1] }} {{ be(year) }}</h2></div>
 
     <div v-if="loading" class="loading-block"><span class="spinner"></span> กำลังคำนวณ Dashboard...</div>
     <div v-else-if="err" class="alert err mt">{{ err }}</div>
     <template v-else-if="d">
-      <!-- 1. monthly overview (Excel rows 7-10) -->
-      <h2 class="mt mb">ภาพรวมเดือน {{ TH_MONTHS[month - 1] }} {{ be(year) }}</h2>
-      <div class="grid g5">
-        <KpiCard label="หลักสูตรที่จัด" :value="num(k.month.sessions)" unit="รอบ" :sub="`หลักสูตร (เดือน ${TH_MONTHS[month - 1]})`" />
-        <KpiCard label="จำนวนผู้เข้าอบรม (คน-ครั้ง)" :value="num(k.month.participants)" :delta="changePct(k.month.participants, k.prev_month.participants) ?? undefined"
-          :sub="`เดือนก่อนหน้า: ${num(k.prev_month.participants)}`" color="var(--c3)" />
-        <KpiCard label="พนักงานที่เข้าอบรม (คน)" :value="num(k.month.employees)" sub="ไม่นับซ้ำ ตามรหัสพนักงาน" color="var(--c5)" />
-        <KpiCard label="สัดส่วน Inhouse : Public" :value="pct(safeDiv(k.month.inhouse, k.month.participants) * 100)"
-          :sub="`Inhouse ${num(k.month.inhouse)} | Public ${num(k.month.public)} | Online ${num(k.month.online)}`" color="var(--c2)" />
-        <KpiCard label="Training Cost เดือนนี้" :value="num(costMonth)" unit="บาท" :sub="`ชั่วโมงอบรม ${num(k.month.hours, 1)} ชม.`" color="var(--c4)" />
-      </div>
-
-      <!-- 2. YTD (Excel rows 12-15) -->
-      <h2 class="mt mb">สะสมทั้งปี {{ be(year) }} (ม.ค. – {{ TH_MONTHS[month - 1] }})</h2>
+      <!-- ① headline numbers, year-to-date vs the same period last year -->
       <div class="grid g4">
-        <KpiCard label="หลักสูตรสะสม" :value="num(k.ytd.sessions)" unit="รอบ" :sub="`ทั้งปี (รวมที่กำหนดไว้แล้ว): ${num(k.planned_sessions_year)}`" />
-        <KpiCard label="ผู้เข้าอบรมสะสม (คน-ครั้ง)" :value="num(k.ytd.participants)" :delta="changePct(k.ytd.participants, k.ytd_last_year.participants) ?? undefined"
-          :sub="`ปีก่อนช่วงเดียวกัน: ${num(k.ytd_last_year.participants)}`" color="var(--c3)" />
-        <KpiCard label="พนักงานที่เข้าอบรมทั้งปี (คน)" :value="num(k.year.employees)"
-          :sub="`เฉลี่ย ${num(safeDiv(k.year.participants, k.year.employees), 1)} หลักสูตร/คน`" color="var(--c5)" />
-        <KpiCard :label="`ผ่านเป้า ≥ ${k.target.target} หลักสูตร/ปี (คน)`" :value="num(k.target.met)"
-          :sub="`${pct(safeDiv(k.target.met, k.target.trained) * 100)} ของพนักงานที่เข้าอบรมในปี`" color="var(--ok)" />
+        <KpiCard label="หลักสูตรที่จัด (สะสม)" :value="num(k.ytd.sessions)" unit="รุ่น" :delta="changePct(k.ytd.sessions, k.ytd_last_year.sessions)"
+          :sub="`ปีก่อนช่วงเดียวกัน ${num(k.ytd_last_year.sessions)} · ทั้งปีตามแผน ${num(k.planned_sessions_year)}`" />
+        <KpiCard label="ผู้เข้าอบรม (คน-ครั้ง)" :value="num(k.ytd.participants)" :delta="changePct(k.ytd.participants, k.ytd_last_year.participants)"
+          :sub="`ปีก่อนช่วงเดียวกัน ${num(k.ytd_last_year.participants)}`" color="var(--c3)" />
+        <KpiCard label="พนักงานที่เข้าอบรม (คน)" :value="num(k.ytd.employees)" :delta="changePct(k.ytd.employees, k.ytd_last_year.employees)"
+          :sub="`เฉลี่ย ${num(safeDiv(k.ytd.participants, k.ytd.employees), 1)} หลักสูตร/คน`" color="var(--c7)" />
+        <KpiCard :label="`ผ่านเป้า ≥ ${k.target.target} หลักสูตร/ปี`" :value="pct(safeDiv(k.target.met, k.target.trained) * 100)"
+          :sub="`${num(k.target.met)} จาก ${num(k.target.trained)} คนที่เข้าอบรม`" color="var(--c4)" />
       </div>
-
-      <!-- 3. Training KPI (full year) -->
-      <h2 class="mt mb">Training KPI ปี {{ be(year) }}</h2>
-      <div class="grid g5">
-        <KpiCard label="Total Training Courses" :value="num(k.year.courses)" :sub="`${num(k.year.sessions)} รอบอบรม (Session)`" />
-        <KpiCard label="Total Participants (คน)" :value="num(k.year.employees)" color="var(--c5)" />
-        <KpiCard label="Total Training Records" :value="num(k.year.participants)" sub="คน-ครั้ง" color="var(--c3)" />
-        <KpiCard label="Total Training Hours" :value="num(k.year.hours, 1)" unit="ชม." :sub="hoursNote" color="var(--c6)" />
-        <KpiCard label="Avg Training Hours / Person" :value="num(safeDiv(k.year.hours, k.year.employees), 1)" unit="ชม." color="var(--c6)" />
-        <KpiCard label="Total Training Cost" :value="num(costYear)" unit="บาท" :sub="costNote" color="var(--c4)" />
-        <KpiCard label="Average Cost / Person" :value="num(safeDiv(costYear, k.year.participants))" unit="บาท" sub="ต่อคน-ครั้ง" color="var(--c4)" />
-        <KpiCard label="Average Cost / Course" :value="num(safeDiv(costYear, k.year.sessions))" unit="บาท" sub="ต่อรอบอบรม" color="var(--c4)" />
-        <KpiCard label="Internal Training" :value="num(k.year.internal_sessions)" unit="รอบ" :sub="`${num(k.year.internal)} คน-ครั้ง`" color="var(--c1)" />
-        <KpiCard label="External Training" :value="num(k.year.external_sessions)" unit="รอบ" :sub="`${num(k.year.external)} คน-ครั้ง (Public/Online)`" color="var(--c2)" />
+      <!-- hours / cost appear only once there is data for them -->
+      <div v-if="k.year.hours || costYear" class="grid g4 mt">
+        <KpiCard v-if="k.year.hours" label="ชั่วโมงอบรมรวม" :value="num(k.year.hours, 1)" unit="ชม." :sub="`เฉลี่ย ${num(safeDiv(k.year.hours, k.year.employees), 1)} ชม./คน`" color="var(--c6)" />
+        <KpiCard v-if="costYear" label="ค่าใช้จ่ายรวม" :value="money(costYear)" unit="บาท" :sub="`เฉลี่ย ${money(safeDiv(costYear, k.year.participants))} บาท/คน-ครั้ง`" color="var(--c2)" />
+        <KpiCard v-if="costYear && budget" label="งบประมาณคงเหลือ" :value="money(budget - costYear)" unit="บาท" :sub="`ใช้ไป ${pct(safeDiv(costYear, budget) * 100)} ของงบ ${money(budget)}`"
+          :color="budget - costYear < 0 ? 'var(--danger)' : 'var(--ok)'" />
       </div>
+      <p class="month-strip">
+        <b>เดือน {{ TH_MONTHS_FULL[month - 1] }}:</b> {{ num(k.month.sessions) }} รุ่น · {{ num(k.month.participants) }} คน-ครั้ง · {{ num(k.month.employees) }} คน
+        <span v-if="changePct(k.month.participants, k.prev_month.participants) !== null" :class="k.month.participants >= k.prev_month.participants ? 'delta-up' : 'delta-down'">
+          {{ k.month.participants >= k.prev_month.participants ? '▲' : '▼' }} {{ Math.abs(changePct(k.month.participants, k.prev_month.participants)).toFixed(0) }}%</span>
+        <span class="muted">เทียบเดือนก่อน ({{ num(k.prev_month.participants) }})</span>
+      </p>
 
-      <!-- insights -->
+      <!-- ② monthly trend: this year vs last year, one axis -->
       <div class="card mt">
-        <div class="card-title"><h2>KEY INSIGHTS</h2><span class="hint">คำนวณจากข้อมูลจริงตามตัวกรอง</span></div>
-        <ul class="insights"><li v-for="(t, i) in insights" :key="i" v-html="t"></li></ul>
+        <div class="card-title"><h2>ผู้เข้าอบรมรายเดือน (คน-ครั้ง)</h2><span class="hint">ปี {{ be(year) }} เทียบปี {{ be(year - 1) }}</span></div>
+        <EChart :option="chartTrend" />
       </div>
 
-      <!-- trend -->
+      <!-- ③ where the training goes -->
       <div class="grid g2 mt">
         <div class="card">
-          <div class="card-title"><h2>แนวโน้มรายเดือน ปี {{ be(year) }}</h2><span class="hint">คน-ครั้งตามประเภท และจำนวนหลักสูตรรายเดือน</span></div>
-          <EChart :option="chartMonthly" tall />
+          <div class="card-title"><h2>ฝ่ายที่เข้าอบรมมากที่สุด</h2><RouterLink to="/reports/department" class="hint">ดูรายงานฝ่าย ›</RouterLink></div>
+          <EChart :option="chartDept" tall />
         </div>
         <div class="card">
-          <div class="card-title"><h2>Training Hours / Cost รายเดือน</h2><span class="hint">Cost / Participant</span></div>
-          <EChart :option="chartCostTrend" tall />
+          <div class="card-title"><h2>หลักสูตรยอดนิยม</h2><RouterLink to="/reports/course" class="hint">ดูรายงานหลักสูตร ›</RouterLink></div>
+          <ol class="rank">
+            <li v-for="c in topCourses" :key="c.label">
+              <div class="rank-name">{{ c.label }}</div>
+              <div class="rank-bar"><i :style="{ width: `${Math.max(4, (c.participants / topCourses[0].participants) * 100)}%` }"></i></div>
+              <div class="rank-val"><b>{{ num(c.participants) }}</b> คน-ครั้ง<span class="muted"> · {{ num(c.sessions) }} รุ่น</span></div>
+            </li>
+          </ol>
         </div>
       </div>
+
+      <!-- ④ things to act on -->
       <div class="card mt">
-        <DataTable :columns="monthlyCols" :rows="monthlyRows" :paginate="false" :sortable="false" row-key="month">
-          <template #foot><tr><td>รวม</td><td class="num">{{ num(sum(d.monthly, 'sessions')) }}</td><td class="num">{{ num(sum(d.monthly, 'participants')) }}</td>
-            <td class="num">{{ num(sum(d.monthly, 'inhouse')) }}</td><td class="num">{{ num(sum(d.monthly, 'public')) }}</td><td class="num">{{ num(sum(d.monthly, 'online')) }}</td>
-            <td class="num">{{ num(k.year.employees - 0) }}</td><td class="num">{{ num(sum(d.monthly, 'hours'), 1) }}</td><td class="num">{{ money(sum(d.monthly, 'cost')) }}</td><td></td></tr></template>
-        </DataTable>
-        <p v-if="k.year.no_date_sessions" class="small muted">ไม่มีวันที่อบรม (ไม่อยู่ในรายเดือน): {{ k.year.no_date_sessions }} หลักสูตร / {{ num(k.year.no_date_participants) }} คน-ครั้ง</p>
+        <div class="card-title"><h2>สิ่งที่ต้องติดตาม</h2></div>
+        <ul class="actions-list">
+          <li v-if="k.target.trained - k.target.met > 0">
+            <span class="dot warn"></span><div><b>{{ num(k.target.trained - k.target.met) }} คน</b> ยังไม่ผ่านเป้า {{ k.target.target }} หลักสูตร/ปี</div>
+            <RouterLink to="/reports/center?r=target" class="btn sm">ดูรายชื่อ ›</RouterLink></li>
+          <li v-if="untrainedDepts.length">
+            <span class="dot warn"></span><div><b>{{ untrainedDepts.length }} ฝ่าย</b> ยังไม่มีพนักงานเข้าอบรมในปี {{ be(year) }}
+              <div class="small muted">{{ untrainedDepts.slice(0, 6).join(' · ') }}{{ untrainedDepts.length > 6 ? ` และอีก ${untrainedDepts.length - 6} ฝ่าย` : '' }}</div></div>
+            <RouterLink to="/reports/department" class="btn sm">ดูรายงานฝ่าย ›</RouterLink></li>
+          <li v-if="k.future_sessions">
+            <span class="dot info"></span><div><b>{{ num(k.future_sessions) }} รุ่น</b> กำหนดจัดหลังวันนี้ในปี {{ be(year) }}</div>
+            <RouterLink to="/training/calendar" class="btn sm">ดูปฏิทิน ›</RouterLink></li>
+          <li v-if="missingCerts">
+            <span class="dot info"></span><div><b>{{ num(missingCerts) }} คน</b> เข้าร่วมแล้วแต่ยังไม่อัปโหลด Certificate (หลักสูตรที่บันทึกในระบบ)</div>
+            <RouterLink to="/training/sessions" class="btn sm">ไปที่ประวัติ ›</RouterLink></li>
+          <li v-if="k.year.not_in_hr">
+            <span class="dot muted-dot"></span><div><b>{{ num(k.year.not_in_hr) }} คน-ครั้ง</b> รหัสพนักงานไม่พบในฐานข้อมูล HR</div>
+            <RouterLink to="/database/employee-import" class="btn sm">นำเข้าพนักงาน ›</RouterLink></li>
+          <li v-if="!hasActions"><span class="dot ok"></span><div>ไม่มีรายการที่ต้องติดตาม</div></li>
+        </ul>
       </div>
 
-      <!-- yearly -->
-      <div class="grid g2 mt">
-        <div class="card">
-          <div class="card-title"><h2>เปรียบเทียบรายปี</h2><span class="hint">คน-ครั้ง / พนักงาน และ % ผ่านเป้า</span></div>
-          <EChart :option="chartYearly" />
+      <!-- details (kept, but out of the way) -->
+      <details class="card mt dash-more">
+        <summary>รายละเอียดเพิ่มเติม — เปรียบเทียบรายปี · ตามประเภท / บริษัท / กลุ่มระดับ · ค่าใช้จ่าย · ข้อสังเกต</summary>
+        <h3 class="mt mb">เปรียบเทียบรายปี</h3>
+        <DataTable :columns="yearlyCols" :rows="yearlyRows" :paginate="false" row-key="be" />
+        <div class="grid g3 mt">
+          <div><h3 class="mb">ตามประเภท</h3><DataTable :columns="splitCols('ประเภท')" :rows="d.by_type || []" :paginate="false" row-key="label" /></div>
+          <div><h3 class="mb">ตามบริษัท</h3><DataTable :columns="splitCols('บริษัท')" :rows="d.by_company || []" :paginate="false" row-key="label" /></div>
+          <div><h3 class="mb">ตามกลุ่มระดับพนักงาน</h3><DataTable :columns="splitCols('กลุ่มระดับ')" :rows="d.by_level || []" :paginate="false" row-key="label" /></div>
         </div>
-        <div class="card">
-          <div class="card-title"><h2>ตารางเปรียบเทียบรายปี</h2></div>
-          <DataTable :columns="yearlyCols" :rows="yearlyRows" :paginate="false" row-key="year" />
-          <p class="small muted">เป้าหมาย {{ k.target.target }} หลักสูตร/คน/ปี — % ผ่านเป้าคิดจากพนักงานที่เข้าอบรมอย่างน้อย 1 ครั้งในปีนั้น</p>
+        <template v-if="expenseTotal">
+          <h3 class="mt mb">ค่าใช้จ่ายตามประเภท</h3>
+          <DataTable :columns="[{ key: 'label', label: 'ประเภทค่าใช้จ่าย' }, { key: 'amount', label: 'จำนวนเงิน', type: 'money' }, { key: 'items', label: 'รายการ', type: 'number' }]" :rows="d.expense_by_group || []" :paginate="false" row-key="label" />
+        </template>
+        <template v-if="insights.length">
+          <h3 class="mt mb">ข้อสังเกต</h3>
+          <ul class="insights"><li v-for="(t, i) in insights" :key="i" v-html="t"></li></ul>
+        </template>
+        <div class="small muted mt">
+          คน-ครั้ง = จำนวนรายการอบรม (1 คน × 1 รุ่น) · พนักงาน (คน) = นับไม่ซ้ำตามรหัสพนักงาน · ปี/เดือนอิงวันที่อบรม ·
+          ค่าใช้จ่ายต่อคน = ค่าใช้จ่ายของรุ่น ÷ ผู้เข้าอบรมของรุ่น
         </div>
-      </div>
-
-      <!-- type / company / level -->
-      <div class="grid g3 mt">
-        <div class="card"><div class="card-title"><h2>สัดส่วนคน-ครั้งตามประเภท</h2></div><EChart :option="chartType" /></div>
-        <div class="card"><div class="card-title"><h2>คน-ครั้งตามบริษัท</h2></div><EChart :option="chartCompany" /></div>
-        <div class="card"><div class="card-title"><h2>คน-ครั้งตามกลุ่มระดับพนักงาน</h2></div><EChart :option="chartLevel" /></div>
-      </div>
-
-      <!-- department dashboard -->
-      <div class="grid g2 mt">
-        <div class="card"><div class="card-title"><h2>Top 10 ฝ่าย (คน-ครั้ง)</h2></div><EChart :option="chartDept" tall /></div>
-        <div class="card">
-          <div class="card-title"><h2>Department Dashboard</h2><span class="hint">10 อันดับฝ่ายที่เข้าอบรมมากที่สุด</span></div>
-          <DataTable :columns="deptCols" :rows="d.top_departments || []" :paginate="false" row-key="label" />
-        </div>
-      </div>
-
-      <!-- course dashboard -->
-      <div class="grid g2 mt">
-        <div class="card">
-          <div class="card-title"><h2>10 อันดับหลักสูตร (รอบอบรม) ที่มีผู้เข้าอบรมมากที่สุด</h2></div>
-          <DataTable :columns="topCourseCols" :rows="d.top_courses || []" :paginate="false" @row-click="(r) => $router.push(`/training/sessions/${r.id}`)" />
-        </div>
-        <div class="card">
-          <div class="card-title"><h2>Course Dashboard — Top Courses</h2><span class="hint">รวมทุกรุ่นของหลักสูตร</span></div>
-          <DataTable :columns="courseMasterCols" :rows="d.top_course_masters || []" :paginate="false" @row-click="(r) => $router.push(`/master/courses/${r.id}`)" />
-        </div>
-      </div>
-
-      <!-- expense dashboard -->
-      <div class="grid g2 mt">
-        <div class="card">
-          <div class="card-title"><h2>Expense Dashboard ปี {{ be(year) }}</h2><span class="hint">Total {{ money(expenseTotal) }} บาท</span></div>
-          <EChart v-if="expenseTotal" :option="chartExpense" />
-          <div v-else class="empty">ยังไม่มีการบันทึกค่าใช้จ่ายของปีนี้<br><span class="small">ข้อมูลย้อนหลังจาก Excel ไม่มีค่าใช้จ่าย — บันทึกได้ที่ Training Session › Expense</span></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><h2>Budget vs Actual</h2></div>
-          <div class="grid g3">
-            <KpiCard label="Budget" :value="money(budget)" unit="บาท" color="var(--c6)" />
-            <KpiCard label="Actual" :value="money(costYear)" unit="บาท" color="var(--c4)" />
-            <KpiCard label="Variance" :value="budget ? money(budget - costYear) : '-'" unit="บาท" :color="budget - costYear < 0 ? 'var(--danger)' : 'var(--ok)'" />
-          </div>
-          <div class="mt">
-            <div class="row small"><span style="flex:1">% Utilization</span><b>{{ budget ? pct((costYear / budget) * 100, 1) : '-' }}</b></div>
-            <div class="progress mt"><div :style="{ width: Math.min(100, budget ? (costYear / budget) * 100 : 0) + '%', background: costYear > budget ? 'var(--danger)' : 'var(--brand)' }"></div></div>
-            <p v-if="!budget" class="small muted mt">ยังไม่ได้ตั้งงบประมาณ — ตั้งได้ที่ Master Data › Training Budget หรือช่อง Budget ของแต่ละ Session</p>
-          </div>
-          <div v-if="(d.cost_by_department || []).length" class="mt">
-            <h3 class="mb">Training Cost by Department</h3>
-            <DataTable :columns="costDeptCols" :rows="d.cost_by_department" :paginate="false" row-key="label" />
-          </div>
-        </div>
-      </div>
-
-      <div class="card mt small muted">
-        <b>หมายเหตุข้อมูล</b>
-        <div>• คน-ครั้ง = จำนวน Training Record (1 คน × 1 รอบอบรม) | พนักงาน (คน) = นับไม่ซ้ำตามรหัสพนักงาน</div>
-        <div>• ปีและเดือนอิงจากวันที่อบรม (วันเริ่ม) — หลักสูตรที่ไม่มีวันที่ใช้ปีจากข้อมูลเดิม และไม่ถูกนับในตารางรายเดือน</div>
-        <div>• หลักสูตรปี {{ be(year) }} ที่กำหนดวันหลังวันนี้ (อยู่ในแผน/ลงทะเบียนแล้ว): {{ k.future_sessions }} รอบ</div>
-        <div>• คน-ครั้งปี {{ be(year) }} ที่ไม่พบรหัสใน Employee Info Report: {{ k.year.not_in_hr }}</div>
-        <div>• Cost / Participant = ค่าใช้จ่ายของรอบอบรม ÷ จำนวนผู้เข้าอบรมของรอบนั้น (กระจายค่าใช้จ่ายตามคน)</div>
-      </div>
+      </details>
     </template>
   </div>
 </template>
@@ -171,7 +125,8 @@ import EChart from '../components/EChart.vue'
 import DataTable from '../components/DataTable.vue'
 import FilterBar from '../components/FilterBar.vue'
 import ExportMenu from '../components/ExportMenu.vue'
-import { dashboard, filterOptions } from '../lib/api'
+import { dashboard, filterOptions, report, fetchAll } from '../lib/api'
+import { supabase } from '../lib/supabase'
 import { TH_MONTHS, TH_MONTHS_FULL, be, num, money, pct, safeDiv, changePct, dateTH } from '../lib/format'
 import { exportExcel, exportCSV, exportPDF, fileStamp } from '../lib/export'
 import { buildInsights } from '../lib/insights'
@@ -187,10 +142,32 @@ const err = ref('')
 const page = ref(null)
 const k = computed(() => d.value?.kpi)
 
+const prev = ref(null)            // same filters, previous year (for the trend comparison)
+const untrainedDepts = ref([])     // departments with active staff but no training this year
+const missingCerts = ref(0)
 async function load() {
   loading.value = true; err.value = ''
-  try { d.value = await dashboard(filters.value, year.value, month.value) }
-  catch (e) { err.value = e.message } finally { loading.value = false }
+  try {
+    const [cur, last] = await Promise.all([dashboard(filters.value, year.value, month.value), dashboard(filters.value, year.value - 1, 12)])
+    d.value = cur; prev.value = last
+    loadActions()
+  } catch (e) { err.value = e.message } finally { loading.value = false }
+}
+async function loadActions() {
+  try {
+    const [depts, staff, certs] = await Promise.all([
+      report({ ...filters.value, years: [year.value] }, 'department'),
+      fetchAll(supabase.from('employees').select('department_id, departments(name)').eq('employment_status', 'Active').is('deleted_at', null).not('department_id', 'is', null)),
+      supabase.from('training_participants').select('id, training_sessions!inner(fiscal_year, data_source, deleted_at)', { count: 'exact', head: true })
+        .is('deleted_at', null).is('certificate_url', null).eq('attendance_status', 'Attended')
+        .eq('training_sessions.fiscal_year', year.value).eq('training_sessions.data_source', 'System Entry').is('training_sessions.deleted_at', null),
+    ])
+    const trained = new Set(depts.map((x) => String(x.group_key)))
+    const names = {}
+    staff.forEach((e) => { if (!trained.has(String(e.department_id))) names[e.department_id] = e.departments?.name || 'ไม่ระบุ' })
+    untrainedDepts.value = Object.values(names).sort((a, b) => a.localeCompare(b))
+    missingCerts.value = certs.count || 0
+  } catch { untrainedDepts.value = []; missingCerts.value = 0 }
 }
 onMounted(async () => {
   const o = await filterOptions()
@@ -213,58 +190,29 @@ const costNote = computed(() => (costYear.value ? (partFilter.value ? 'กระ
 const insights = computed(() => (d.value ? buildInsights(d.value, year.value, month.value) : []))
 
 // ---------- charts ----------
-const labelsM = TH_MONTHS
-const chartMonthly = computed(() => ({
+const chartTrend = computed(() => ({
   legend: { top: 0 },
-  xAxis: { type: 'category', data: labelsM },
-  yAxis: [{ type: 'value', name: 'คน-ครั้ง' }, { type: 'value', name: 'หลักสูตร', splitLine: { show: false } }],
-  series: [
-    { name: 'Inhouse', type: 'bar', stack: 't', data: d.value.monthly.map((m) => m.inhouse) },
-    { name: 'Public', type: 'bar', stack: 't', data: d.value.monthly.map((m) => m.public) },
-    { name: 'Online', type: 'bar', stack: 't', data: d.value.monthly.map((m) => m.online) },
-    { name: 'หลักสูตร', type: 'line', yAxisIndex: 1, smooth: true, data: d.value.monthly.map((m) => m.sessions), color: '#e76f51' },
-  ],
-}))
-const chartCostTrend = computed(() => ({
-  legend: { top: 0 },
-  xAxis: { type: 'category', data: labelsM },
-  yAxis: [{ type: 'value', name: 'บาท' }, { type: 'value', name: 'ชม.', splitLine: { show: false } }],
-  series: [
-    { name: 'Training Cost', type: 'bar', data: d.value.monthly.map((m) => Math.round(m.cost)) },
-    { name: 'Cost / Participant', type: 'line', data: d.value.monthly.map((m) => (m.participants ? Math.round(m.cost / m.participants) : 0)) },
-    { name: 'Training Hours', type: 'line', yAxisIndex: 1, smooth: true, data: d.value.monthly.map((m) => m.hours) },
-    { name: 'Participants', type: 'line', yAxisIndex: 1, smooth: true, lineStyle: { type: 'dashed' }, data: d.value.monthly.map((m) => m.participants) },
-  ],
-}))
-const yearlyRows = computed(() => (d.value.yearly || []).map((y) => ({ ...y, be: y.year + 543, pct_met: safeDiv(y.met_target, y.employees) * 100 })))
-const chartYearly = computed(() => ({
-  legend: { top: 0 },
-  xAxis: { type: 'category', data: yearlyRows.value.map((y) => String(y.be)) },
-  yAxis: [{ type: 'value' }, { type: 'value', max: 100, axisLabel: { formatter: '{value}%' }, splitLine: { show: false } }],
-  series: [
-    { name: 'คน-ครั้ง', type: 'bar', data: yearlyRows.value.map((y) => y.participants) },
-    { name: 'พนักงาน (คน)', type: 'bar', data: yearlyRows.value.map((y) => y.employees) },
-    { name: '% ผ่านเป้า', type: 'line', yAxisIndex: 1, data: yearlyRows.value.map((y) => Math.round(y.pct_met)) },
-  ],
-}))
-const pie = (rows, key = 'participants') => ({
-  tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-  legend: { bottom: 0, type: 'scroll' },
-  series: [{ type: 'pie', radius: ['45%', '72%'], center: ['50%', '45%'], data: rows.map((r) => ({ name: r.label, value: r[key] })), label: { formatter: '{d}%' } }],
-})
-const hbar = (rows, key, name) => ({
-  grid: { left: 8, right: 30, top: 10, bottom: 8, containLabel: true },
   tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-  xAxis: { type: 'value' },
-  yAxis: { type: 'category', inverse: true, data: rows.map((r) => r.label), axisLabel: { width: 170, overflow: 'truncate' } },
-  series: [{ name, type: 'bar', data: rows.map((r) => r[key]), label: { show: true, position: 'right' } }],
+  xAxis: { type: 'category', data: TH_MONTHS },
+  yAxis: { type: 'value' },
+  series: [
+    { name: `ปี ${be(year.value)}`, type: 'bar', barGap: '10%', itemStyle: { borderRadius: [4, 4, 0, 0] }, data: d.value.monthly.map((m) => m.participants) },
+    { name: `ปี ${be(year.value - 1)}`, type: 'bar', itemStyle: { borderRadius: [4, 4, 0, 0], opacity: 0.55 }, data: (prev.value?.monthly || []).map((m) => m.participants) },
+  ],
+}))
+const chartDept = computed(() => {
+  const rows = (d.value.top_departments || []).slice(0, 10)
+  return {
+    grid: { left: 8, right: 36, top: 6, bottom: 6, containLabel: true },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    xAxis: { type: 'value', splitLine: { lineStyle: { color: '#eef1f5' } } },
+    yAxis: { type: 'category', inverse: true, data: rows.map((r) => r.label), axisLabel: { width: 190, overflow: 'truncate' }, axisTick: { show: false } },
+    series: [{ name: 'คน-ครั้ง', type: 'bar', barWidth: 14, itemStyle: { borderRadius: [0, 4, 4, 0] }, data: rows.map((r) => r.participants), label: { show: true, position: 'right' } }],
+  }
 })
-const chartType = computed(() => pie(d.value.by_type || []))
-const chartCompany = computed(() => hbar(d.value.by_company || [], 'participants', 'คน-ครั้ง'))
-const chartLevel = computed(() => hbar(d.value.by_level || [], 'participants', 'คน-ครั้ง'))
-const chartDept = computed(() => hbar(d.value.top_departments || [], 'participants', 'คน-ครั้ง'))
-const EXP_TH = { 'Course Fee': 'ค่าหลักสูตร', 'Trainer Fee': 'ค่าวิทยากร', Food: 'ค่าอาหาร/เครื่องดื่ม', Accommodation: 'ที่พัก', Transportation: 'เดินทาง', Venue: 'สถานที่', Material: 'เอกสาร/อุปกรณ์', Other: 'อื่น ๆ' }
-const chartExpense = computed(() => pie((d.value.expense_by_group || []).map((x) => ({ label: `${x.label} (${EXP_TH[x.label] || ''})`, amount: Math.round(x.amount) })), 'amount'))
+const topCourses = computed(() => (d.value.top_course_masters || []).slice(0, 8))
+const hasActions = computed(() => (k.value.target.trained - k.value.target.met > 0) || untrainedDepts.value.length || k.value.future_sessions || missingCerts.value || k.value.year.not_in_hr)
+const splitCols = (label) => [{ key: 'label', label }, { key: 'participants', label: 'คน-ครั้ง', type: 'number' }, { key: 'employees', label: 'พนักงาน', type: 'number' }]
 
 // ---------- tables ----------
 const monthlyRows = computed(() => d.value.monthly.map((m) => ({ ...m, label: TH_MONTHS[m.month - 1], cpp: m.participants ? m.cost / m.participants : null })))
@@ -324,3 +272,25 @@ async function doExport(kind) {
   ])
 }
 </script>
+
+<style scoped>
+.dash-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.dash-head p { margin: 4px 0 0; }
+.dash-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dash-controls .input { width: auto; min-width: 130px; }
+.month-strip { margin: 14px 2px 0; font-size: 13.5px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rank { list-style: none; margin: 0; padding: 0; counter-reset: r; display: grid; gap: 12px; }
+.rank li { counter-increment: r; display: grid; grid-template-columns: 26px 1fr; grid-template-areas: 'n name' 'n bar' 'n val'; column-gap: 10px; row-gap: 3px; }
+.rank li::before { content: counter(r); grid-area: n; width: 24px; height: 24px; border-radius: 50%; background: var(--brand-50); color: var(--brand); font-weight: 700; font-size: 12px; display: grid; place-items: center; }
+.rank-name { grid-area: name; font-weight: 500; line-height: 1.35; }
+.rank-bar { grid-area: bar; height: 6px; background: #eef1f5; border-radius: 99px; overflow: hidden; }
+.rank-bar i { display: block; height: 100%; background: var(--c1); border-radius: 99px; }
+.rank-val { grid-area: val; font-size: 12.5px; color: var(--ink-2); }
+.actions-list { list-style: none; margin: 0; padding: 0; }
+.actions-list li { display: grid; grid-template-columns: 12px 1fr auto; gap: 12px; align-items: center; padding: 12px 2px; border-bottom: 1px solid var(--line-2); }
+.actions-list li:last-child { border-bottom: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.warn { background: #e8a33d; } .dot.info { background: var(--c1); } .dot.ok { background: var(--ok); } .dot.muted-dot { background: #b8c1cc; }
+.dash-more summary { cursor: pointer; font-weight: 600; color: var(--brand-500); }
+.dash-more[open] summary { margin-bottom: 4px; }
+</style>
