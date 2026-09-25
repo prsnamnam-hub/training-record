@@ -6,22 +6,15 @@
       <p class="login-tagline">แอสเซทไวส์ นิยามของการทำงานอย่างมี <b>“ความสุข”</b></p>
     </header>
     <div class="login-card">
-      <div class="tabs">
-        <button :class="{ on: mode === 'in' }" @click="mode = 'in'">เข้าสู่ระบบ</button>
-        <button :class="{ on: mode === 'up' }" @click="mode = 'up'">ลงทะเบียน</button>
-        <button :class="{ on: mode === 'reset' }" @click="mode = 'reset'">ลืมรหัสผ่าน</button>
-      </div>
-      <form @submit.prevent="submit" class="grid" style="gap:12px">
-        <div v-if="mode === 'up'" class="field"><label>ชื่อ-นามสกุล</label><input v-model="name" class="input" required /></div>
+      <h2 class="login-title">เข้าสู่ระบบ</h2>
+      <form @submit.prevent="submit" class="grid" style="gap:14px">
         <div class="field"><label>อีเมล</label><input v-model="email" type="email" class="input" autocomplete="username" required /></div>
-        <div v-if="mode !== 'reset'" class="field"><label>รหัสผ่าน</label>
-          <input v-model="password" type="password" class="input" :autocomplete="mode === 'up' ? 'new-password' : 'current-password'" minlength="8" required /></div>
+        <div class="field"><label>รหัสผ่าน</label>
+          <input v-model="password" type="password" class="input" autocomplete="current-password" required /></div>
         <div v-if="error" class="alert err">{{ error }}</div>
-        <div v-if="info" class="alert ok">{{ info }}</div>
-        <button class="btn primary" :disabled="busy" style="justify-content:center">
-          {{ mode === 'in' ? 'เข้าสู่ระบบ' : mode === 'up' ? 'ลงทะเบียน' : 'ส่งลิงก์ตั้งรหัสผ่านใหม่' }}
-        </button>
-        <p v-if="mode === 'up'" class="small muted">ผู้ลงทะเบียนใหม่จะได้สิทธิ์ Viewer — Admin สามารถเปลี่ยน Role ได้ที่เมนู Settings › Users</p>
+        <button class="btn primary login-submit" :disabled="busy">{{ busy ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}</button>
+        <!-- accounts are created by an Admin (Settings › ผู้ใช้งาน), who can also set a new password -->
+        <p class="small muted" style="text-align:center;margin:0">ยังไม่มีบัญชี หรือลืมรหัสผ่าน — ติดต่อผู้ดูแลระบบ (Admin)</p>
       </form>
     </div>
   </div>
@@ -30,38 +23,25 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { APP_NAME } from '../lib/config'
-import { signIn, signUp, resetPassword } from '../lib/auth'
+import { signIn } from '../lib/auth'
 
 const logo = import.meta.env.BASE_URL + 'logo-assetwise-stacked.png'
 
 const router = useRouter()
 const route = useRoute()
-const mode = ref('in')
 const email = ref('')
 const password = ref('')
-const name = ref('')
 const error = ref('')
-const info = ref('')
 const busy = ref(false)
 const TH_ERR = {
   'Invalid login credentials': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-  'Email not confirmed': 'ยังไม่ได้ยืนยันอีเมล — กรุณาเปิดลิงก์ยืนยันในอีเมลของคุณ',
-  'User already registered': 'อีเมลนี้ลงทะเบียนแล้ว',
+  'Email not confirmed': 'บัญชียังไม่ได้ยืนยันอีเมล — กรุณาติดต่อผู้ดูแลระบบ',
 }
 async function submit() {
-  error.value = ''; info.value = ''; busy.value = true
+  error.value = ''; busy.value = true
   try {
-    if (mode.value === 'in') {
-      await signIn(email.value, password.value)
-      router.replace(route.query.next || '/dashboard')
-    } else if (mode.value === 'up') {
-      const r = await signUp(email.value, password.value, name.value)
-      if (r.session) router.replace('/dashboard')
-      else info.value = 'ลงทะเบียนสำเร็จ — กรุณายืนยันอีเมลจากลิงก์ที่ส่งไป แล้วกลับมาเข้าสู่ระบบ'
-    } else {
-      await resetPassword(email.value)
-      info.value = 'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว'
-    }
+    await signIn(email.value, password.value)
+    router.replace(route.query.next || '/dashboard')
   } catch (e) {
     error.value = TH_ERR[e.message] || e.message
   } finally { busy.value = false }

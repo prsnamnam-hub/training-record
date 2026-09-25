@@ -4,7 +4,8 @@
       :subtitle="`${s.course_name} · ${dateRange}`">
       <RouterLink to="/training/sessions" class="btn">‹ ประวัติการฝึกอบรม</RouterLink>
       <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn">แก้ไขข้อมูล</RouterLink>
-      <button v-if="canEdit && s.status !== 'Cancelled'" class="btn danger" @click="cancel">ยกเลิกรอบอบรม</button>
+      <button v-if="canEdit && s.status !== 'Cancelled'" class="btn" @click="cancel">ยกเลิกรอบอบรม</button>
+      <button v-if="canEdit && s.data_source !== 'Historical Excel'" class="btn danger" @click="remove">ลบหลักสูตร</button>
     </PageHeader>
     <ol v-if="route.query.step === '2'" class="stepper">
       <li class="done"><b>✓</b> ข้อมูลหลักสูตร</li>
@@ -48,7 +49,7 @@
 </template>
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../../components/PageHeader.vue'
 import KpiCard from '../../components/KpiCard.vue'
 import SessionParticipants from '../../components/SessionParticipants.vue'
@@ -58,6 +59,7 @@ import { canEdit } from '../../lib/auth'
 import { num, money, dateTH } from '../../lib/format'
 import { statusColor, typeColor } from '../../lib/constants'
 import { toastOk, toastError } from '../../lib/toast'
+import { deleteSession } from '../../lib/api'
 
 const route = useRoute()
 const s = ref(null); const err = ref(''); const tab = ref(route.query.tab === 'expense' ? 'e' : 'p')
@@ -71,6 +73,10 @@ async function cancel() {
   if (!confirm('ยืนยันยกเลิกรอบอบรมนี้? ข้อมูลยังคงอยู่ในระบบ (สถานะ Cancelled)')) return
   try { await must(supabase.from('training_sessions').update({ status: 'Cancelled' }).eq('id', s.value.id)); toastOk('ยกเลิกรอบอบรมแล้ว'); load() }
   catch (e) { toastError(e) }
+}
+const router = useRouter()
+async function remove() {
+  try { if (await deleteSession(s.value)) { toastOk(`ลบ "${s.value.session_name}" แล้ว`); router.replace('/training/sessions') } } catch (e) { toastError(e) }
 }
 onMounted(load)
 </script>

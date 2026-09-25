@@ -14,7 +14,7 @@
     <div v-if="loading" class="loading-block"><span class="spinner"></span></div>
     <div v-else-if="d" ref="page" class="report">
       <div class="card">
-        <div class="row"><img :src="logo" style="width:40px" alt="" /><div><h2>ASW Training Record</h2>
+        <div class="row"><img :src="logo" style="width:150px" alt="ASSET WISE" /><div><h2>ASW Training Record</h2>
           <div class="muted">Monthly Training Management Report · {{ TH_MONTHS_FULL[month - 1] }} {{ be(year) }}</div></div></div>
       </div>
 
@@ -82,7 +82,7 @@ import { TH_MONTHS, TH_MONTHS_FULL, be, num, money, pct, safeDiv, changePct, dat
 import { buildInsights, dashboardCosts } from '../../lib/insights'
 import { exportExcel, exportCSV, exportPDF, fileStamp } from '../../lib/export'
 
-const logo = import.meta.env.BASE_URL + 'favicon.svg'
+const logo = import.meta.env.BASE_URL + 'logo-assetwise.png'
 const now = new Date()
 const year = ref(now.getFullYear()); const month = ref(now.getMonth() + 1); const years = ref([now.getFullYear()])
 const filters = ref({}); const d = ref(null); const list = ref([]); const loading = ref(true); const page = ref(null)

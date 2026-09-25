@@ -24,6 +24,13 @@
         </template>
         <template #cell-status="{ row }"><span class="badge" :class="statusColor(row.status)">{{ row.status }}</span></template>
         <template #cell-training_type="{ row }"><span class="badge" :class="typeColor(row.training_type)">{{ row.training_type || '-' }}</span></template>
+        <template v-if="canEdit" #actions="{ row }">
+          <div class="row" style="flex-wrap:nowrap;gap:6px">
+            <RouterLink :to="`/training/sessions/${row.id}/edit`" class="btn sm">แก้ไข</RouterLink>
+            <button class="btn sm danger" :disabled="row.data_source === 'Historical Excel'"
+              :title="row.data_source === 'Historical Excel' ? 'ข้อมูลย้อนหลังจาก Excel ลบไม่ได้' : 'ลบหลักสูตรนี้'" @click="remove(row)">ลบ</button>
+          </div>
+        </template>
       </DataTable>
     </div>
   </div>
@@ -36,7 +43,8 @@ import DataTable from '../../components/DataTable.vue'
 import MultiSelect from '../../components/MultiSelect.vue'
 import ExportMenu from '../../components/ExportMenu.vue'
 import { supabase, must } from '../../lib/supabase'
-import { filterOptions, fetchAll } from '../../lib/api'
+import { filterOptions, fetchAll, deleteSession } from '../../lib/api'
+import { toastOk, toastError } from '../../lib/toast'
 import { canEdit } from '../../lib/auth'
 import { TH_MONTHS, dateTH } from '../../lib/format'
 import { exportExcel, exportCSV, fileStamp } from '../../lib/export'
@@ -71,6 +79,9 @@ function query(countMode) {
   const s = search.value.replace(/[%,()]/g, ' ').trim()
   if (s) q = q.or(`session_name.ilike.%${s}%,course_name.ilike.%${s}%,session_code.ilike.%${s}%,location.ilike.%${s}%,provider_name.ilike.%${s}%${/^\d+$/.test(s) ? `,legacy_course_id.eq.${s},id.eq.${s}` : ''}`)
   return q.order(order.value.key, { ascending: order.value.asc, nullsFirst: false }).order('id', { ascending: false })
+}
+async function remove(r) {
+  try { if (await deleteSession(r)) { toastOk(`ลบ "${r.session_name}" แล้ว`); load() } } catch (e) { toastError(e) }
 }
 async function load() {
   loading.value = true
