@@ -26,9 +26,8 @@
         <template #cell-training_type="{ row }"><span class="badge" :class="typeColor(row.training_type)">{{ row.training_type || '-' }}</span></template>
         <template v-if="canEdit" #actions="{ row }">
           <div class="row" style="flex-wrap:nowrap;gap:6px">
-            <RouterLink :to="`/training/sessions/${row.id}/edit`" class="btn sm">แก้ไข</RouterLink>
-            <button class="btn sm danger" :disabled="row.data_source === 'Historical Excel'"
-              :title="row.data_source === 'Historical Excel' ? 'ข้อมูลย้อนหลังจาก Excel ลบไม่ได้' : 'ลบหลักสูตรนี้'" @click="remove(row)">ลบ</button>
+            <RouterLink :to="`/training/sessions/${row.id}/edit`" class="btn sm" @click.stop>แก้ไข</RouterLink>
+            <button class="btn sm danger" title="ลบหลักสูตรนี้" @click.stop="remove(row)">ลบ</button>
           </div>
         </template>
       </DataTable>

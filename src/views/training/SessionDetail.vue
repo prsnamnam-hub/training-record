@@ -5,7 +5,7 @@
       <RouterLink to="/training/sessions" class="btn">‹ ประวัติการฝึกอบรม</RouterLink>
       <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn">แก้ไขข้อมูล</RouterLink>
       <button v-if="canEdit && s.status !== 'Cancelled'" class="btn" @click="cancel">ยกเลิกรอบอบรม</button>
-      <button v-if="canEdit && s.data_source !== 'Historical Excel'" class="btn danger" @click="remove">ลบหลักสูตร</button>
+      <button v-if="canEdit" class="btn danger" @click="remove">ลบหลักสูตร</button>
     </PageHeader>
     <ol v-if="route.query.step === '2'" class="stepper">
       <li class="done"><b>✓</b> ข้อมูลหลักสูตร</li>

@@ -114,11 +114,11 @@ export async function searchEmployees(term, limit = 20) {
   return must(q.order('employee_code').limit(limit))
 }
 
-/** Soft-delete a training session (hidden everywhere, kept in the Audit Log). Historical Excel rows are protected. */
+/** Soft-delete a training session (hidden everywhere, row + Audit Log kept, restorable). Any source, incl. Historical Excel (owner decision 2026-09-25). */
 export async function deleteSession(s) {
-  if (s.data_source === 'Historical Excel') throw new Error('ข้อมูลย้อนหลังจาก Excel ลบไม่ได้ (รักษาข้อมูลเดิม) — แก้ไขได้')
   const n = s.participant_count ?? 0
-  if (!confirm(`ลบหลักสูตร "${s.session_name}"?\n${n ? `มีผู้เข้าอบรม ${n} คน — ` : ''}ข้อมูลจะหายจากรายการและรายงาน (ยังเก็บใน Audit Log และกู้คืนได้)`)) return false
+  const hist = s.data_source === 'Historical Excel' ? 'รายการนี้เป็นข้อมูลย้อนหลังจาก Excel — ตัวเลขใน Dashboard / รายงานจะเปลี่ยน\n' : ''
+  if (!confirm(`ลบหลักสูตร "${s.session_name}"?\n${hist}${n ? `มีผู้เข้าอบรม ${n} คน — ` : ''}ข้อมูลจะหายจากรายการและรายงาน (ยังเก็บใน Audit Log และกู้คืนได้)`)) return false
   await must(supabase.from('training_sessions').update({ deleted_at: new Date().toISOString() }).eq('id', s.id))
   return true
 }

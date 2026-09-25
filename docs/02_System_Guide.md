@@ -49,6 +49,7 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 | Course ID ซ้ำชื่อ/วันเดียวกัน | เก็บแยก session | Excel Dashboard นับแยก (135/122/71/60 รอบ ตรงกับ Excel) |
 | Participant ซ้ำ 3 คู่ | นำเข้า 1 แถว + log ใน `import_issues` | duplicate จริง |
 | "Teambuilding BU2" (ไม่มีปี/วันที่) | invalid ใน migration | ไม่มีข้อมูลปี — สร้างใหม่ในระบบได้ |
+| ลบหลักสูตร | soft delete ได้ทุกแหล่งข้อมูล รวม Historical Excel (เจ้าของระบบอนุมัติ 25-Sep-2026) | กู้คืนได้ + Audit Log |
 | Cost per participant | ค่าใช้จ่ายของรอบ ÷ ผู้เข้าอบรมของรอบ (allocated) | ทำให้ Cost by Department รวมได้ถูกต้อง |
 
 ## 4. โครงสร้าง Repository
