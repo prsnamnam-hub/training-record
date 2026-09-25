@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Roles & Permissions" subtitle="สิทธิ์การใช้งานตาม Role — บังคับใช้ที่ฐานข้อมูลด้วย Row Level Security" crumb="System" />
+    <PageHeader title="Roles & Permissions" subtitle="สิทธิ์การใช้งานตาม Role — บังคับใช้ที่ฐานข้อมูลด้วย Row Level Security" crumb="Settings" />
     <div class="card">
       <div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>สิทธิ์</th><th>ADMIN</th><th>HR / TRAINING</th><th>VIEWER</th></tr></thead>

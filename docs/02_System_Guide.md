@@ -81,9 +81,9 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
    * วิธีที่ใช้จริงครั้งแรก (ไม่ต้องใช้รหัสผ่าน DB): `npx supabase login` แล้ว `supabase db query --linked --project-ref <ref> -f …`
      Management API รับได้ ~1 MB/request → อัปโหลด seed เป็นชิ้น ~250 แถวเข้า schema ชั่วคราว `import_staging` (revoke จาก anon/authenticated)
      → รัน `import_training_rows` ต่อไฟล์ใน transaction เดียว + ตรวจตัวเลข (ไม่ตรง = rollback) → `drop schema import_staging cascade`
-5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ (Admin = สิทธิ์สูงสุด / superadmin); คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ System › Users
+5. Authentication → Users: ผู้ใช้ **คนแรก** ที่ลงทะเบียนจะเป็น Admin อัตโนมัติ (Admin = สิทธิ์สูงสุด / superadmin); คนถัดไปเป็น Viewer → Admin เปลี่ยน Role ที่ Settings › Users
    * วิธีที่แนะนำสำหรับคนแรก: Supabase › Authentication › Users › **Add user › Create new user** (ติ๊ก Auto Confirm) — ไม่ต้องรออีเมลยืนยัน
-   * หลังจากนั้น Admin เพิ่มผู้ใช้พร้อมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ได้ที่ System › Users (Edge Function `admin-users`)
+   * หลังจากนั้น Admin เพิ่มผู้ใช้พร้อมรหัสผ่าน / ตั้งรหัสผ่านใหม่ ได้ที่ Settings › Users (Edge Function `admin-users`)
 5.1 Deploy Edge Function (ครั้งแรก/เมื่อแก้): `npx supabase login` แล้ว
    `npx supabase functions deploy admin-users --project-ref lcouhsgvzsqhppqedpzk --use-api`
    (Gateway ตรวจ JWT + function ตรวจ role Admin อีกชั้น; ใช้ `SUPABASE_SERVICE_ROLE_KEY` ที่ Supabase ใส่ให้ฝั่ง server — ไม่มี secret ใน repo/browser)

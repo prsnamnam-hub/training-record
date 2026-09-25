@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Settings" subtitle="ตั้งค่าระบบ ASW Training Record" crumb="System" />
+    <PageHeader title="General Settings" subtitle="ตั้งค่าทั่วไปของระบบ ASW Training Record" crumb="Settings" />
     <div class="card" style="max-width:640px">
       <div class="field"><label>เป้าหมายจำนวนหลักสูตรต่อคนต่อปี (Training Target)</label>
         <div class="row"><input v-model.number="target" type="number" min="1" class="input" style="width:120px" /><button class="btn primary" @click="save">บันทึก</button></div>

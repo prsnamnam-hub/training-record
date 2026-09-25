@@ -41,7 +41,7 @@ const routes = [
       { path: 'system/users', component: v('system/Users'), meta: { title: 'Users', admin: true } },
       { path: 'system/roles', component: v('system/Roles'), meta: { title: 'Roles' } },
       { path: 'system/audit', component: v('system/AuditLog'), meta: { title: 'Audit Log', admin: true } },
-      { path: 'system/settings', component: v('system/Settings'), meta: { title: 'Settings', admin: true } },
+      { path: 'system/settings', component: v('system/Settings'), meta: { title: 'General Settings', admin: true } },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },

@@ -2,8 +2,8 @@
   <div class="login-wrap">
     <div class="login-card">
       <div class="logo">
-        <img :src="logo" alt="" />
-        <div><h2>{{ APP_NAME }}</h2><div class="small muted">{{ APP_TAGLINE }}</div></div>
+        <div class="wordmark">ASSET WISE</div>
+        <div class="small muted" style="margin-top:6px">{{ APP_NAME }} — {{ APP_TAGLINE }}</div>
       </div>
       <div class="tabs">
         <button :class="{ on: mode === 'in' }" @click="mode = 'in'">เข้าสู่ระบบ</button>
@@ -20,7 +20,7 @@
         <button class="btn primary" :disabled="busy" style="justify-content:center">
           {{ mode === 'in' ? 'เข้าสู่ระบบ' : mode === 'up' ? 'ลงทะเบียน' : 'ส่งลิงก์ตั้งรหัสผ่านใหม่' }}
         </button>
-        <p v-if="mode === 'up'" class="small muted">ผู้ลงทะเบียนใหม่จะได้สิทธิ์ Viewer — Admin สามารถเปลี่ยน Role ได้ที่เมนู System › Users</p>
+        <p v-if="mode === 'up'" class="small muted">ผู้ลงทะเบียนใหม่จะได้สิทธิ์ Viewer — Admin สามารถเปลี่ยน Role ได้ที่เมนู Settings › Users</p>
       </form>
     </div>
   </div>
@@ -31,7 +31,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { APP_NAME, APP_TAGLINE } from '../lib/config'
 import { signIn, signUp, resetPassword } from '../lib/auth'
 
-const logo = import.meta.env.BASE_URL + 'favicon.svg'
 const router = useRouter()
 const route = useRoute()
 const mode = ref('in')

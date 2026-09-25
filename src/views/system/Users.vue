@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Users" subtitle="ผู้ใช้งานระบบ — กำหนด Role (Admin / HR-Training / Viewer) และเปิด/ปิดการใช้งาน" crumb="System">
+    <PageHeader title="Users" subtitle="ผู้ใช้งานระบบ — กำหนด Role (Admin / HR-Training / Viewer) และเปิด/ปิดการใช้งาน" crumb="Settings">
       <button class="btn primary" @click="openCreate">+ เพิ่มผู้ใช้</button>
     </PageHeader>
     <div class="alert mb">Admin เพิ่มผู้ใช้พร้อมรหัสผ่านได้ที่ปุ่ม <b>+ เพิ่มผู้ใช้</b> (ใช้งานได้ทันที ไม่ต้องยืนยันอีเมล) · ผู้ที่ลงทะเบียนเองที่หน้า Login จะได้สิทธิ์ <b>Viewer</b> — Admin เปลี่ยน Role ได้ที่ตารางนี้ · ผู้ใช้คนแรกของระบบเป็น Admin</div>
