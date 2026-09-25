@@ -5,6 +5,8 @@
 //
 // POST { action: 'create', email, password, full_name?, role? }   -> new confirmed user (+ role)
 // POST { action: 'set_password', user_id, password }              -> set another user's password
+// POST { action: 'delete', user_id }                               -> remove a user (soft delete: sign-in blocked,
+//                                                                     audit history that references the user stays intact)
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ROLES = ['admin', 'hr_training', 'viewer']
@@ -34,6 +36,18 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>
   try { body = await req.json() } catch { return json({ error: 'invalid JSON' }, 400) }
+  if (body.action === 'delete') {
+    const userId = String(body.user_id ?? '')
+    if (!userId) return json({ error: 'user_id required' }, 400)
+    if (userId === caller.user.id) return json({ error: 'ลบบัญชีของตัวเองไม่ได้' }, 400)
+    // soft delete keeps auth.users rows that created_by / updated_by columns still reference
+    const { error } = await admin.auth.admin.deleteUser(userId, true)
+    if (error) return json({ error: error.message }, 400)
+    const { error: pErr } = await admin.from('profiles').delete().eq('id', userId)
+    if (pErr) return json({ error: pErr.message }, 500)
+    return json({ id: userId, deleted: true })
+  }
+
   const password = String(body.password ?? '')
   if (password.length < MIN_PASSWORD) return json({ error: `รหัสผ่านต้องมีอย่างน้อย ${MIN_PASSWORD} ตัวอักษร` }, 400)
 

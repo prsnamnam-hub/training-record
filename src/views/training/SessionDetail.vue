@@ -6,6 +6,10 @@
       <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn">แก้ไขข้อมูล</RouterLink>
       <button v-if="canEdit && s.status !== 'Cancelled'" class="btn danger" @click="cancel">ยกเลิกรอบอบรม</button>
     </PageHeader>
+    <ol v-if="route.query.step === '2'" class="stepper">
+      <li class="done"><b>✓</b> ข้อมูลหลักสูตร</li>
+      <li class="on"><b>2</b> ผู้เข้าอบรม — คีย์รหัสพนักงานด้านล่าง</li>
+    </ol>
     <div class="grid g5 mb">
       <KpiCard label="ผู้เข้าอบรม" :value="num(s.participant_count)" unit="คน" />
       <KpiCard label="ชั่วโมงอบรม" :value="s.training_hours ? num(s.training_hours, 1) : '-'" unit="ชม." color="var(--c6)" />
@@ -14,6 +18,8 @@
       <KpiCard label="Cost / Training Hour" :value="money(s.cost_per_hour)" unit="บาท" color="var(--c4)" />
     </div>
     <div class="card mb">
+      <div class="card-title"><h3>Part 1 — ข้อมูลหลักสูตร</h3>
+        <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn sm">แก้ไข</RouterLink></div>
       <div class="form-grid">
         <div><div class="small muted">หลักสูตร</div><RouterLink :to="`/master/courses/${s.course_id}`">{{ s.course_name }}</RouterLink></div>
         <div><div class="small muted">ประเภท</div><span class="badge" :class="typeColor(s.training_type)">{{ s.training_type || '-' }}</span></div>
@@ -29,11 +35,11 @@
       </div>
     </div>
     <div class="tabs">
-      <button :class="{ on: tab === 'p' }" @click="tab = 'p'">ผู้เข้าอบรม & ผลการอบรม ({{ s.participant_count }})</button>
+      <button :class="{ on: tab === 'p' }" @click="tab = 'p'">Part 2 — ผู้เข้าอบรม ({{ s.participant_count }})</button>
       <button :class="{ on: tab === 'e' }" @click="tab = 'e'">ค่าใช้จ่าย (Expense)</button>
     </div>
     <div class="card">
-      <SessionParticipants v-if="tab === 'p'" :session-id="s.id" :session="s" @changed="load" />
+      <SessionParticipants v-if="tab === 'p'" :session-id="s.id" :session="s" :autofocus="route.query.step === '2'" @changed="load" />
       <SessionExpenses v-else :session-id="s.id" :session="s" @changed="load" />
     </div>
   </div>

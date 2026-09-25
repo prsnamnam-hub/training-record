@@ -1,8 +1,8 @@
 <template>
   <div>
-    <PageHeader title="Training Session" subtitle="รอบอบรมทั้งหมด (1 หลักสูตรมีได้หลายรอบ/รุ่น) — ข้อมูลย้อนหลังจาก Excel + ข้อมูลใหม่ในระบบ">
+    <PageHeader title="บันทึกหลักสูตร / รุ่นอบรม" subtitle="กด + บันทึกหลักสูตรใหม่ → Part 1 ข้อมูลหลักสูตร → Part 2 คีย์รหัสพนักงาน · คลิกรายการเพื่อดู/แก้ไข หรือเพิ่มผู้เข้าอบรม">
       <ExportMenu :handler="doExport" :pdf="false" />
-      <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ สร้าง Training</RouterLink>
+      <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ บันทึกหลักสูตรใหม่</RouterLink>
     </PageHeader>
     <div class="card">
       <div class="filterbar">

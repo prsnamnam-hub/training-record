@@ -1,10 +1,26 @@
 <template>
   <div>
+    <div v-if="canEdit" class="code-entry no-print">
+      <div style="flex:1;min-width:260px">
+        <label class="small" style="font-weight:600;display:block;margin-bottom:6px">คีย์รหัสพนักงาน → กด Enter เพื่อเพิ่มเข้าหลักสูตร</label>
+        <input ref="codeInput" v-model="code" class="input" autocomplete="off"
+          placeholder="เช่น 59015 — วางหลายรหัสพร้อมกันได้ (คั่นด้วยเว้นวรรค / จุลภาค / ขึ้นบรรทัด)" @input="lookup" @keydown.enter.prevent="addCodes" />
+        <div class="hit">
+          <span v-if="preview?.state === 'found'">✔ <b>{{ preview.emp.full_name }}</b><span v-if="preview.emp.nickname"> ({{ preview.emp.nickname }})</span>
+            · {{ preview.emp.departments?.name || 'ไม่ระบุฝ่าย' }} · {{ preview.emp.employment_status || '-' }}
+            <span v-if="inSession(preview.emp.id)" style="color:var(--warn)"> — อยู่ในหลักสูตรนี้แล้ว</span></span>
+          <span v-else-if="preview?.state === 'notfound'" style="color:var(--danger)">ไม่พบรหัส {{ preview.code }} ในฐานข้อมูลพนักงาน — เพิ่มได้ที่ Database › นำเข้าพนักงาน</span>
+          <span v-else-if="preview?.state === 'multi'" class="muted">{{ preview.n }} รหัส — กด Enter เพื่อเพิ่มทั้งหมด</span>
+          <span v-else class="muted">ชื่อ ฝ่าย และระดับตำแหน่งจะดึงจากฐานข้อมูลพนักงานให้อัตโนมัติ</span>
+        </div>
+      </div>
+      <button class="btn primary" style="margin-top:26px" :disabled="!code.trim() || saving" @click="addCodes">เพิ่มเข้าหลักสูตร</button>
+    </div>
     <div class="row mb no-print">
       <input v-model="q" class="input" style="max-width:280px" placeholder="ค้นหาในรายชื่อ" />
       <span class="spacer" style="flex:1"></span>
       <template v-if="canEdit">
-        <button class="btn sm primary" @click="pickOpen = true">+ เพิ่มผู้เข้าอบรม</button>
+        <button class="btn sm" @click="pickOpen = true">ค้นหาจากรายชื่อ / เลือกหลายคน</button>
         <label class="btn sm">⬆ Import Excel (รหัสพนักงาน)<input type="file" accept=".xlsx" hidden @change="importFile" /></label>
         <button class="btn sm" :disabled="!dirty.size || saving" @click="saveResults">บันทึกผลการอบรม ({{ dirty.size }})</button>
         <MultiSelect v-model="bulkAttend" :options="ATTENDANCE.map((a) => ({ id: a, name: 'ตั้งค่าทั้งหมด: ' + a }))" :multiple="false" placeholder="ตั้งค่าการเข้าร่วมทั้งหมด" style="min-width:210px" @update:model-value="applyBulk" />
@@ -55,7 +71,7 @@
   </div>
 </template>
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import DataTable from './DataTable.vue'
 import Modal from './Modal.vue'
 import MultiSelect from './MultiSelect.vue'
@@ -67,7 +83,7 @@ import { ATTENDANCE, COMPLETION, attendColor } from '../lib/constants'
 import { toastOk, toastError, toast } from '../lib/toast'
 import { exportExcel, exportCSV, fileStamp } from '../lib/export'
 
-const props = defineProps({ sessionId: { type: [Number, String], required: true }, session: Object })
+const props = defineProps({ sessionId: { type: [Number, String], required: true }, session: Object, autofocus: Boolean })
 const emit = defineEmits(['changed'])
 const rows = ref([]); const loading = ref(false); const q = ref('')
 const pickOpen = ref(false); const picked = ref([]); const saving = ref(false)
@@ -128,6 +144,40 @@ async function addPicked() {
     await load(); emit('changed')
   } catch (e) { toastError(e) } finally { saving.value = false }
 }
+// --- Part 2: add participants by employee code (data comes from the employee master) ---
+const code = ref(''); const preview = ref(null); const codeInput = ref(null)
+const pad = (c) => (/^\d+$/.test(c) && c.length < 5 ? c.padStart(5, '0') : c)
+const parseCodes = (t) => [...new Set(t.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean).map(pad))]
+const inSession = (empId) => rows.value.some((r) => r.employee_id === empId)
+let lookupTimer
+function lookup() {
+  clearTimeout(lookupTimer)
+  const cs = parseCodes(code.value)
+  if (cs.length !== 1) { preview.value = cs.length ? { state: 'multi', n: cs.length } : null; return }
+  lookupTimer = setTimeout(async () => {
+    const { data } = await supabase.from('employees').select('id, employee_code, full_name, nickname, employment_status, departments(name)')
+      .eq('employee_code', cs[0]).is('deleted_at', null).maybeSingle()
+    if (parseCodes(code.value)[0] !== cs[0]) return // typed on meanwhile
+    preview.value = data ? { state: 'found', emp: data } : { state: 'notfound', code: cs[0] }
+  }, 250)
+}
+async function addCodes() {
+  const cs = parseCodes(code.value)
+  if (!cs.length || saving.value) return
+  saving.value = true
+  try {
+    const emp = await must(supabase.from('employees').select('id, employee_code, full_name').in('employee_code', cs).is('deleted_at', null))
+    const missing = cs.filter((c) => !emp.some((e) => e.employee_code === c))
+    const n = await insertEmployees(emp.map((e) => e.id))
+    const dup = emp.length - n
+    const parts = [n === 1 && emp.length === 1 ? `เพิ่ม ${emp[0].employee_code} ${emp[0].full_name} แล้ว` : `เพิ่ม ${n} คน`]
+    if (dup) parts.push(`อยู่ในหลักสูตรแล้ว ${dup}`)
+    if (missing.length) parts.push(`ไม่พบรหัส ${missing.join(', ')}`)
+    toast(parts.join(' · '), missing.length || (dup && !n) ? 'err' : 'ok', missing.length ? 8000 : 3500)
+    code.value = missing.join(' '); preview.value = null
+    if (n) { await load(); emit('changed') }
+  } catch (e) { toastError(e) } finally { saving.value = false; nextTick(() => codeInput.value?.focus()) }
+}
 async function remove(r) {
   if (!confirm(`นำ ${r.employee_name} ออกจากรอบอบรมนี้?\n(ข้อมูลจะถูกเก็บไว้ใน Audit Log และกู้คืนได้)`)) return
   try {
@@ -157,6 +207,6 @@ async function doExport(kind) {
   if (kind === 'csv') return exportCSV(`${name}.csv`, c, rows.value)
   return exportExcel(`${name}.xlsx`, [{ name: 'Participants', title: props.session?.session_name, columns: c, rows: rows.value }])
 }
-onMounted(load)
+onMounted(async () => { await load(); if (props.autofocus) nextTick(() => codeInput.value?.focus()) })
 defineExpose({ load })
 </script>

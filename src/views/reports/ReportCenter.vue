@@ -1,6 +1,9 @@
 <template>
   <div>
-    <PageHeader title="ASW Training Record Report Center" subtitle="เลือกรายงาน → กรองข้อมูล (เลือกได้หลายค่า) → Export Excel / CSV / PDF · คลิกแถวเพื่อเจาะลึก" />
+    <PageHeader title="รายงานอื่น ๆ" subtitle="เลือกรายงาน → กรองข้อมูล (เลือกได้หลายค่า) → Export Excel / CSV / PDF · คลิกแถวเพื่อเจาะลึก">
+      <RouterLink to="/reports/monthly" class="btn">รายงานประจำเดือน (Management)</RouterLink>
+      <RouterLink to="/reports/custom" class="btn">Custom Report</RouterLink>
+    </PageHeader>
     <div class="row mb" style="gap:6px">
       <button v-for="r in REPORTS" :key="r.id" class="btn sm" :class="{ primary: cur.id === r.id }" @click="select(r)">{{ r.label }}</button>
     </div>
@@ -15,26 +18,8 @@ import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '../../components/PageHeader.vue'
 import ReportRunner from '../../components/ReportRunner.vue'
 import TargetReport from './TargetReport.vue'
+import { REPORTS } from '../../lib/reports'
 
-const base = ['sessions', 'participants', 'employees', 'training_hours', 'total_cost', 'cost_per_participant']
-const REPORTS = [
-  { id: 'course', label: 'Course Report', group: 'course', desc: 'สรุปตามหลักสูตร (รวมทุกรุ่น) — Sessions, Participants, Hours, Cost, Cost/Person, Cost/Hour', metrics: ['sessions', 'participants', 'employees', 'training_hours', 'total_cost', 'cost_per_participant', 'cost_per_hour', 'last_date'], file: 'Training_Course_Report' },
-  { id: 'course_summary', label: 'Course Summary (รายรอบ)', group: 'session', desc: 'สรุปรายรอบอบรม (Training Session)', metrics: ['participants', 'employees', 'training_hours', 'inhouse', 'public_cnt', 'online', 'total_cost', 'cost_per_participant', 'cost_per_hour'], file: 'Training_Course_Summary' },
-  { id: 'employee', label: 'Employee Summary', group: 'employee', desc: 'สรุปรายพนักงาน — คลิกชื่อเพื่อดู Employee Training History', metrics: ['courses', 'participants', 'training_hours', 'total_cost', 'last_date'], file: 'Training_Employee_Summary' },
-  { id: 'department', label: 'Department Report', group: 'department', desc: 'Employee Count, Participants, Training Courses, Hours, Cost, Cost/Employee', metrics: ['headcount', 'employees', 'pct_trained', 'participants', 'courses', 'training_hours', 'total_cost', 'cost_per_employee', 'cost_per_participant'], file: 'Training_Department_Report' },
-  { id: 'monthly', label: 'Monthly Training Report', group: 'year_month', desc: 'รายเดือนต่อเนื่อง (Historical Trend 2566 → ปัจจุบัน)', metrics: ['sessions', 'participants', 'employees', 'inhouse', 'public_cnt', 'online', 'training_hours', 'total_cost', 'cost_per_participant'], file: 'Training_Record_Report' },
-  { id: 'year', label: 'Yearly Report', group: 'year', desc: 'สรุปรายปี', metrics: ['sessions', 'courses', 'participants', 'employees', 'inhouse', 'public_cnt', 'online', 'training_hours', 'total_cost', 'cost_per_participant'], file: 'Training_Yearly_Report' },
-  { id: 'cost', label: 'Training Cost Report', group: 'session', desc: 'ค่าใช้จ่ายรายรอบอบรม — Total Cost / Cost per Participant / Cost per Hour', metrics: ['participants', 'training_hours', 'total_cost', 'cost_per_participant', 'cost_per_hour'], chart: 'total_cost', file: 'Training_Cost_Report' },
-  { id: 'cost_dept', label: 'Training Cost by Department', group: 'department', desc: 'ค่าใช้จ่ายกระจายตามผู้เข้าอบรมของแต่ละฝ่าย', metrics: ['headcount', 'participants', 'total_cost', 'cost_per_employee', 'cost_per_participant'], chart: 'total_cost', file: 'Training_Cost_by_Department' },
-  { id: 'category', label: 'Training Category Report', group: 'category', desc: 'สรุปตามหมวดหมู่หลักสูตร', metrics: base, file: 'Training_Category_Report' },
-  { id: 'type', label: 'Training Type Report', group: 'training_type', desc: 'Inhouse / Public / Online (Internal vs External)', metrics: ['sessions', 'courses', ...base.slice(1)], file: 'Training_Type_Report' },
-  { id: 'provider', label: 'Training Provider Report', group: 'provider', desc: 'สรุปตามผู้จัดอบรม', metrics: ['sessions', 'courses', ...base.slice(1)], file: 'Training_Provider_Report' },
-  { id: 'trainer', label: 'Trainer Report', group: 'trainer', desc: 'สรุปตามวิทยากร', metrics: ['sessions', 'courses', ...base.slice(1)], file: 'Training_Trainer_Report' },
-  { id: 'company', label: 'Company Report', group: 'company', desc: 'แยกตามบริษัท (จาก Excel Dashboard)', metrics: base, file: 'Training_Company_Report' },
-  { id: 'level', label: 'Level Group Report', group: 'level_group', desc: 'แยกตามกลุ่มระดับพนักงาน (จาก Excel Dashboard)', metrics: ['participants', 'employees', 'avg_hours_per_person', 'training_hours', 'total_cost'], file: 'Training_Level_Report' },
-  { id: 'bg', label: 'Business Group Report', group: 'business_group', desc: 'แยกตามกลุ่มธุรกิจ', metrics: base, file: 'Training_Business_Group_Report' },
-  { id: 'target', label: 'Training Target (≥ 2/ปี)', desc: 'พนักงานที่ผ่าน/ไม่ผ่านเป้าหมายจำนวนหลักสูตรต่อปี (จาก Excel: completed of Target 2 Course : Year)' },
-]
 const route = useRoute(); const router = useRouter()
 const cur = ref(REPORTS.find((r) => r.id === route.query.r) || REPORTS[0])
 function select(r) { cur.value = r; router.replace({ query: { r: r.id } }) }

@@ -30,7 +30,7 @@
           บัญชีของคุณยังไม่ได้รับสิทธิ์ใช้งาน หรือถูกปิดใช้งาน — กรุณาติดต่อผู้ดูแลระบบ (Admin) เพื่อกำหนด Role
         </div>
         <nav v-if="subItems.length > 1" class="subnav no-print">
-          <RouterLink v-for="i in subItems" :key="i.to" :to="i.to" :class="{ on: $route.path === i.to || $route.path.startsWith(i.to + '/') }">{{ i.label }}</RouterLink>
+          <RouterLink v-for="i in subItems" :key="i.to" :to="i.to" :class="{ on: tabActive(i, $route.path, subItems) }">{{ i.label }}</RouterLink>
         </nav>
         <RouterView :key="$route.fullPath" />
       </main>
@@ -43,7 +43,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { APP_NAME, APP_TAGLINE } from '../lib/config'
 import { auth, role, ROLE_LABEL, signOut, canEdit, isAdmin } from '../lib/auth'
-import { MENU, sectionOf } from '../lib/menu'
+import { MENU, sectionOf, tabActive } from '../lib/menu'
 
 const logo = import.meta.env.BASE_URL + 'logo-assetwise.png'
 const route = useRoute()

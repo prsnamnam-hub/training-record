@@ -1,6 +1,6 @@
 <template>
   <div ref="page">
-    <PageHeader title="Employee Training History" subtitle="ประวัติการฝึกอบรมรายบุคคล">
+    <PageHeader title="รายงานรายบุคคล" subtitle="ประวัติการฝึกอบรมรายบุคคล (Employee Training History) — ค้นหาด้วยรหัสพนักงานหรือชื่อ">
       <ExportMenu v-if="emp" :handler="doExport" />
     </PageHeader>
     <div class="card mb no-print">

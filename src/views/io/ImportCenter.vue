@@ -1,11 +1,12 @@
 <template>
   <div>
-    <PageHeader title="ASW Training Record — Import Center" subtitle="Select Excel → Read → Mapping → Validation → Duplicate Detection → Preview → Confirm → Import → Summary">
+    <PageHeader :title="preset === 'employee' ? 'นำเข้าข้อมูลพนักงาน (Excel)' : 'นำเข้าข้อมูล (Import Center)'"
+      :subtitle="preset === 'employee' ? 'อัปโหลดไฟล์ Excel รายชื่อพนักงาน → ตรวจสอบ → ยืนยัน — พนักงานใหม่จะถูกเพิ่ม พนักงานเดิม (รหัสเดียวกัน) จะถูกอัปเดต ใช้เป็นฐานข้อมูลตอนคีย์รหัสพนักงานเข้าหลักสูตร' : 'เลือกไฟล์ Excel → จับคู่คอลัมน์ → ตรวจสอบ → ยืนยัน → Import'">
       <button class="btn" @click="downloadTemplate">⬇ Template ({{ def.label }})</button>
     </PageHeader>
 
     <div class="tabs">
-      <button v-for="(t, k) in IMPORT_TYPES" :key="k" :class="{ on: type === k }" :disabled="busy" @click="setType(k)">{{ t.label }}</button>
+      <button v-for="(t, k) in shownTypes" :key="k" :class="{ on: type === k }" :disabled="busy" @click="setType(k)">{{ t.label }}</button>
       <button :class="{ on: type === 'history' }" @click="type = 'history'; loadBatches()">ประวัติการ Import</button>
     </div>
 
@@ -96,7 +97,10 @@ import { exportExcel } from '../../lib/export'
 import { toastOk } from '../../lib/toast'
 
 const STATUS_COLOR = { new: 'green', updated: 'blue', duplicate: 'amber', invalid: 'red', session_only: 'purple' }
-const type = ref('training_record')
+const props = defineProps({ preset: String })
+const type = ref(props.preset || 'training_record')
+// Database › นำเข้าพนักงาน shows only the employee import (+ its history); /import shows every type
+const shownTypes = computed(() => (props.preset ? { [props.preset]: IMPORT_TYPES[props.preset] } : IMPORT_TYPES))
 const def = computed(() => IMPORT_TYPES[type.value] || IMPORT_TYPES.training_record)
 const wb = ref(null); const sheets = ref([]); const sheet = ref(''); const parsed = ref(null); const fileName = ref('')
 const mapping = ref({}); const busy = ref(false); const stage = ref(''); const progress = ref(0); const error = ref('')

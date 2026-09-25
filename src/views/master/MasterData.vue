@@ -1,6 +1,9 @@
 <template>
   <div v-if="cfg">
-    <PageHeader :title="cfg.title" :subtitle="cfg.subtitle" crumb="Master Data">
+    <nav class="chips mb">
+      <RouterLink v-for="(c, k) in CONFIG" :key="k" :to="`/master/${k}`" :class="{ on: k === entity }">{{ c.title }}</RouterLink>
+    </nav>
+    <PageHeader :title="cfg.title" :subtitle="cfg.subtitle" crumb="ข้อมูลหลัก">
       <ExportMenu :handler="doExport" :pdf="false" />
       <button v-if="canEdit" class="btn primary" @click="open({})">+ เพิ่ม</button>
     </PageHeader>
