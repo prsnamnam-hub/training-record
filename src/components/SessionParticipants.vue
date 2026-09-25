@@ -16,52 +16,54 @@
       </div>
       <button class="btn primary" style="margin-top:26px" :disabled="!code.trim() || saving" @click="addCodes">เพิ่มเข้าหลักสูตร</button>
     </div>
+
     <div class="row mb no-print">
-      <input v-model="q" class="input" style="max-width:280px" placeholder="ค้นหาในรายชื่อ" />
-      <span class="spacer" style="flex:1"></span>
+      <input v-model="q" class="input" style="max-width:260px" placeholder="ค้นหาในรายชื่อ" />
+      <span style="flex:1"></span>
       <template v-if="canEdit">
-        <button class="btn sm" @click="pickOpen = true">ค้นหาจากรายชื่อ / เลือกหลายคน</button>
-        <label class="btn sm">⬆ Import Excel (รหัสพนักงาน)<input type="file" accept=".xlsx" hidden @change="importFile" /></label>
-        <button class="btn sm" :disabled="!dirty.size || saving" @click="saveResults">บันทึกผลการอบรม ({{ dirty.size }})</button>
-        <MultiSelect v-model="bulkAttend" :options="ATTENDANCE.map((a) => ({ id: a, name: 'ตั้งค่าทั้งหมด: ' + a }))" :multiple="false" placeholder="ตั้งค่าการเข้าร่วมทั้งหมด" style="min-width:210px" @update:model-value="applyBulk" />
+        <button class="btn sm primary" :disabled="!dirty.size || saving" @click="saveResults">บันทึกผล{{ dirty.size ? ` (${dirty.size})` : '' }}</button>
+        <button class="btn sm" :disabled="!rows.length" @click="setAll('Attended')">เข้าร่วมทั้งหมด</button>
+        <button class="btn sm" @click="pickOpen = true">เลือกจากรายชื่อ</button>
+        <label class="btn sm">อัปโหลด Excel<input type="file" accept=".xlsx" hidden @change="importFile" /></label>
+        <button class="btn sm ghost" @click="downloadTemplate">ดาวน์โหลดแบบฟอร์ม Excel</button>
       </template>
       <ExportMenu :handler="doExport" :pdf="false" />
     </div>
-    <DataTable :columns="cols" :rows="shown" :loading="loading" :size="100">
-      <template #cell-employee_name="{ row }">
-        <RouterLink :to="`/master/employees/${row.employee_id}`">{{ row.employee_name }}</RouterLink>
-        <div class="small muted">{{ row.employee_code }} · {{ row.nickname }}</div>
+
+    <DataTable :columns="cols" :rows="shown" :loading="loading" :size="100" empty-text="ยังไม่มีผู้เข้าอบรม — คีย์รหัสพนักงานด้านบน">
+      <template #cell-employee_code="{ row }">
+        <RouterLink :to="`/master/employees/${row.employee_id}`">{{ row.employee_code }}</RouterLink>
       </template>
       <template #cell-attendance_status="{ row }">
-        <select v-if="canEdit" v-model="row.attendance_status" class="input" @change="mark(row)"><option v-for="a in ATTENDANCE" :key="a">{{ a }}</option></select>
-        <span v-else class="badge" :class="attendColor(row.attendance_status)">{{ row.attendance_status }}</span>
+        <select v-if="canEdit" v-model="row.attendance_status" class="input" style="min-width:140px" @change="mark(row)">
+          <option v-if="!ATTEND_OPTS.some((a) => a.id === row.attendance_status)" :value="row.attendance_status">- เลือก -</option>
+          <option v-for="a in ATTEND_OPTS" :key="a.id" :value="a.id">{{ a.name }}</option>
+        </select>
+        <span v-else class="badge" :class="row.attendance_status === 'Attended' ? 'green' : row.attendance_status === 'Absent' ? 'red' : ''">{{ attendLabel(row.attendance_status) }}</span>
       </template>
-      <template #cell-completion_status="{ row }">
-        <select v-if="canEdit" v-model="row.completion_status" class="input" @change="mark(row)"><option v-for="a in COMPLETION" :key="a">{{ a }}</option></select>
-        <span v-else>{{ row.completion_status }}</span>
+      <template #cell-pre_test_score="{ row }">
+        <input v-if="canEdit" v-model.number="row.pre_test_score" type="number" min="0" step="0.5" class="input num" style="width:90px" @input="mark(row)" />
+        <span v-else>{{ row.pre_test_score ?? '-' }}</span>
       </template>
-      <template #cell-score="{ row }">
-        <input v-if="canEdit" v-model.number="row.score" type="number" min="0" step="0.5" class="input num" style="width:80px" @input="mark(row)" />
-        <span v-else>{{ row.score ?? '-' }}</span>
+      <template #cell-post_test_score="{ row }">
+        <input v-if="canEdit" v-model.number="row.post_test_score" type="number" min="0" step="0.5" class="input num" style="width:90px" @input="mark(row)" />
+        <span v-else>{{ row.post_test_score ?? '-' }}</span>
       </template>
-      <template #cell-evaluation_score="{ row }">
-        <input v-if="canEdit" v-model.number="row.evaluation_score" type="number" min="0" step="0.1" class="input num" style="width:80px" @input="mark(row)" />
-        <span v-else>{{ row.evaluation_score ?? '-' }}</span>
-      </template>
-      <template #cell-certificate_no="{ row }">
-        <input v-if="canEdit" v-model="row.certificate_no" class="input" style="width:130px" @input="mark(row)" />
-        <span v-else>{{ row.certificate_no || '-' }}</span>
-      </template>
-      <template #cell-training_hours="{ row }">
-        <input v-if="canEdit" v-model.number="row.training_hours" type="number" min="0" step="0.5" class="input num" style="width:80px" :placeholder="String(session?.training_hours ?? '')" @input="mark(row)" />
-        <span v-else>{{ row.training_hours ?? session?.training_hours ?? '-' }}</span>
+      <template #cell-certificate_url="{ row }">
+        <div class="row" style="flex-wrap:nowrap;gap:6px">
+          <button v-if="row.certificate_url" class="btn sm" @click="openCert(row)">ดูไฟล์</button>
+          <label v-if="canEdit" class="btn sm" :class="{ primary: !row.certificate_url }">
+            {{ uploading === row.id ? 'กำลังอัปโหลด...' : row.certificate_url ? 'เปลี่ยน' : 'อัปโหลด' }}
+            <input type="file" accept=".pdf,image/png,image/jpeg,image/webp" hidden :disabled="uploading === row.id" @change="uploadCert(row, $event)" /></label>
+          <span v-if="!row.certificate_url && !canEdit" class="muted">-</span>
+        </div>
       </template>
       <template v-if="canEdit" #actions="{ row }">
-        <button class="btn sm danger" title="นำออกจากรอบอบรม" @click="remove(row)">นำออก</button>
+        <button class="btn sm ghost danger" title="นำออกจากหลักสูตร" @click="remove(row)">นำออก</button>
       </template>
     </DataTable>
 
-    <Modal :open="pickOpen" title="เพิ่มผู้เข้าอบรม (Search / Filter Department / Bulk Add)" wide @close="pickOpen = false">
+    <Modal :open="pickOpen" title="เลือกผู้เข้าอบรมจากรายชื่อ" wide @close="pickOpen = false">
       <EmployeePicker :exclude="rows.map((r) => r.employee_id)" @change="(l) => (picked = l)" />
       <template #footer>
         <button class="btn" @click="pickOpen = false">ยกเลิก</button>
@@ -74,66 +76,76 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import DataTable from './DataTable.vue'
 import Modal from './Modal.vue'
-import MultiSelect from './MultiSelect.vue'
 import EmployeePicker from './EmployeePicker.vue'
 import ExportMenu from './ExportMenu.vue'
 import { supabase, must } from '../lib/supabase'
 import { canEdit } from '../lib/auth'
-import { ATTENDANCE, COMPLETION, attendColor } from '../lib/constants'
 import { toastOk, toastError, toast } from '../lib/toast'
 import { exportExcel, exportCSV, fileStamp } from '../lib/export'
 
 const props = defineProps({ sessionId: { type: [Number, String], required: true }, session: Object, autofocus: Boolean })
 const emit = defineEmits(['changed'])
 const rows = ref([]); const loading = ref(false); const q = ref('')
-const pickOpen = ref(false); const picked = ref([]); const saving = ref(false)
-const dirty = reactive(new Set()); const bulkAttend = ref(null)
+const pickOpen = ref(false); const picked = ref([]); const saving = ref(false); const uploading = ref(null)
+const dirty = reactive(new Set())
 
+const ATTEND_OPTS = [{ id: 'Attended', name: 'เข้าร่วม' }, { id: 'Absent', name: 'ไม่ได้เข้าร่วม' }]
+const attendLabel = (s) => ATTEND_OPTS.find((a) => a.id === s)?.name || '-'
 const cols = [
-  { key: 'employee_name', label: 'พนักงาน' }, { key: 'department_name', label: 'ฝ่าย' }, { key: 'position_name', label: 'ระดับตำแหน่ง' },
-  { key: 'attendance_status', label: 'การเข้าร่วม' }, { key: 'completion_status', label: 'ผลการอบรม' },
-  { key: 'training_hours', label: 'ชั่วโมง', type: 'number' }, { key: 'score', label: 'คะแนน', type: 'number' },
-  { key: 'evaluation_score', label: 'คะแนนประเมิน', type: 'number' }, { key: 'certificate_no', label: 'Certificate' },
+  { key: 'employee_code', label: 'รหัส' }, { key: 'first_name', label: 'ชื่อ' }, { key: 'last_name', label: 'นามสกุล' },
+  { key: 'nickname', label: 'ชื่อเล่น' }, { key: 'department_name', label: 'ฝ่าย' }, { key: 'position_name', label: 'ระดับตำแหน่ง' },
+  { key: 'attendance_status', label: 'การเข้าร่วม' }, { key: 'pre_test_score', label: 'Pre-Test', type: 'number' },
+  { key: 'post_test_score', label: 'Post-Test', type: 'number' }, { key: 'certificate_url', label: 'Certificate', sortable: false },
 ]
 const shown = computed(() => {
   const s = q.value.trim().toLowerCase()
-  return s ? rows.value.filter((r) => [r.employee_code, r.employee_name, r.nickname, r.department_name].some((x) => String(x || '').toLowerCase().includes(s))) : rows.value
+  return s ? rows.value.filter((r) => [r.employee_code, r.first_name, r.last_name, r.nickname, r.department_name].some((x) => String(x || '').toLowerCase().includes(s))) : rows.value
 })
 async function load() {
   loading.value = true
   try {
     const data = await must(supabase.from('training_participants')
-      .select('id, employee_id, attendance_status, completion_status, training_hours, score, evaluation_score, certificate_no, remark, employees(employee_code, full_name, nickname), departments(name), positions(name)')
+      .select('id, employee_id, attendance_status, completion_status, pre_test_score, post_test_score, certificate_url, employees(employee_code, first_name_th, last_name_th, legacy_first_name, legacy_last_name, nickname, legacy_nickname), departments(name), positions(name)')
       .eq('session_id', props.sessionId).is('deleted_at', null).order('id'))
-    rows.value = data.map((r) => ({ ...r, employee_code: r.employees?.employee_code, employee_name: r.employees?.full_name, nickname: r.employees?.nickname,
-      department_name: r.departments?.name, position_name: r.positions?.name }))
+    rows.value = data.map((r) => ({ ...r, employee_code: r.employees?.employee_code,
+      first_name: r.employees?.first_name_th || r.employees?.legacy_first_name, last_name: r.employees?.last_name_th || r.employees?.legacy_last_name,
+      nickname: r.employees?.nickname || r.employees?.legacy_nickname, department_name: r.departments?.name, position_name: r.positions?.name }))
     dirty.clear()
   } finally { loading.value = false }
 }
 const mark = (r) => dirty.add(r.id)
-function applyBulk(v) { if (!v) return; rows.value.forEach((r) => { r.attendance_status = v; mark(r) }); bulkAttend.value = null }
+function setAll(v) { rows.value.forEach((r) => { if (r.attendance_status !== v) { r.attendance_status = v; mark(r) } }) }
+const numOrNull = (v) => (v === '' || v === undefined || v === null || Number.isNaN(Number(v)) ? null : Number(v))
+// attendance drives completion so reports stay consistent (not attended → not completed)
+const completionFor = (a, cur) => (a === 'Attended' ? 'Completed' : a === 'Absent' ? 'Not Completed' : cur)
 async function saveResults() {
   saving.value = true
   try {
     for (const id of dirty) {
       const r = rows.value.find((x) => x.id === id)
-      const num = (v) => (v === '' || v === undefined ? null : v)
-      await must(supabase.from('training_participants').update({ attendance_status: r.attendance_status, completion_status: r.completion_status,
-        training_hours: num(r.training_hours), score: num(r.score), evaluation_score: num(r.evaluation_score), certificate_no: r.certificate_no || null }).eq('id', id))
+      await must(supabase.from('training_participants').update({ attendance_status: r.attendance_status,
+        completion_status: completionFor(r.attendance_status, r.completion_status),
+        pre_test_score: numOrNull(r.pre_test_score), post_test_score: numOrNull(r.post_test_score) }).eq('id', id))
     }
-    toastOk(`บันทึกผลการอบรม ${dirty.size} รายการ`)
+    toastOk(`บันทึกผล ${dirty.size} รายการ`)
     dirty.clear(); emit('changed')
   } catch (e) { toastError(e) } finally { saving.value = false }
 }
-async function insertEmployees(ids) {
+// values: optional { [employee_id]: { attendance_status, pre_test_score, post_test_score } } from the Excel upload
+async function insertEmployees(ids, values = {}) {
   const existing = new Set(rows.value.map((r) => r.employee_id))
   ids = ids.filter((id) => !existing.has(id))
   if (!ids.length) return 0
   const emp = await must(supabase.from('employees').select('id, company_id, department_id, level_group_id, position_id').in('id', ids))
   const future = props.session?.start_date && props.session.start_date > new Date().toISOString().slice(0, 10)
-  await must(supabase.from('training_participants').insert(emp.map((e) => ({ session_id: Number(props.sessionId), employee_id: e.id,
-    company_id: e.company_id, department_id: e.department_id, level_group_id: e.level_group_id, position_id: e.position_id,
-    attendance_status: future ? 'Registered' : 'Attended', completion_status: future ? 'Pending' : 'Completed', data_source: 'System Entry' }))))
+  await must(supabase.from('training_participants').insert(emp.map((e) => {
+    const v = values[e.id] || {}
+    const attend = v.attendance_status || (future ? 'Registered' : 'Attended')
+    return { session_id: Number(props.sessionId), employee_id: e.id, company_id: e.company_id, department_id: e.department_id,
+      level_group_id: e.level_group_id, position_id: e.position_id, attendance_status: attend,
+      completion_status: completionFor(attend, future ? 'Pending' : 'Completed'),
+      pre_test_score: v.pre_test_score ?? null, post_test_score: v.post_test_score ?? null, data_source: 'System Entry' }
+  })))
   return emp.length
 }
 async function addPicked() {
@@ -144,6 +156,7 @@ async function addPicked() {
     await load(); emit('changed')
   } catch (e) { toastError(e) } finally { saving.value = false }
 }
+
 // --- add participants by employee code (data comes from the employee master) ---
 const code = ref(''); const preview = ref(null); const codeInput = ref(null)
 const pad = (c) => (/^\d+$/.test(c) && c.length < 5 ? c.padStart(5, '0') : c)
@@ -178,12 +191,53 @@ async function addCodes() {
     if (n) { await load(); emit('changed') }
   } catch (e) { toastError(e) } finally { saving.value = false; nextTick(() => codeInput.value?.focus()) }
 }
+
+// --- certificate files (private bucket "certificates", opened through a short-lived signed URL) ---
+async function uploadCert(r, ev) {
+  const file = ev.target.files[0]; ev.target.value = ''
+  if (!file) return
+  if (file.size > 10 * 1024 * 1024) return toastError(new Error('ไฟล์ใหญ่เกิน 10 MB'))
+  uploading.value = r.id
+  try {
+    const ext = (file.name.split('.').pop() || 'pdf').toLowerCase()
+    const path = `${props.sessionId}/${r.id}-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('certificates').upload(path, file, { contentType: file.type || undefined })
+    if (error) throw error
+    await must(supabase.from('training_participants').update({ certificate_url: path }).eq('id', r.id))
+    if (r.certificate_url && !/^https?:/.test(r.certificate_url)) await supabase.storage.from('certificates').remove([r.certificate_url])
+    r.certificate_url = path
+    toastOk(`อัปโหลด Certificate ของ ${r.first_name || r.employee_code} แล้ว`)
+  } catch (e) { toastError(e) } finally { uploading.value = null }
+}
+async function openCert(r) {
+  if (/^https?:/.test(r.certificate_url)) return window.open(r.certificate_url, '_blank', 'noopener')
+  const { data, error } = await supabase.storage.from('certificates').createSignedUrl(r.certificate_url, 120)
+  if (error) return toastError(error)
+  window.open(data.signedUrl, '_blank', 'noopener')
+}
+
 async function remove(r) {
-  if (!confirm(`นำ ${r.employee_name} ออกจากรอบอบรมนี้?\n(ข้อมูลจะถูกเก็บไว้ใน Audit Log และกู้คืนได้)`)) return
+  if (!confirm(`นำ ${r.first_name || ''} ${r.last_name || ''} ออกจากหลักสูตรนี้?\n(ข้อมูลจะถูกเก็บไว้ใน Audit Log และกู้คืนได้)`)) return
   try {
     await must(supabase.from('training_participants').update({ deleted_at: new Date().toISOString() }).eq('id', r.id))
     toastOk('นำออกเรียบร้อย'); await load(); emit('changed')
   } catch (e) { toastError(e) }
+}
+
+// --- Excel upload: รหัสพนักงาน · การเข้าร่วม · Pre-Test · Post-Test (same columns as the template) ---
+const TEMPLATE_COLS = [{ key: 'employee_code', label: 'รหัสพนักงาน' }, { key: 'attendance', label: 'การเข้าร่วม' },
+  { key: 'pre', label: 'Pre-Test', type: 'number' }, { key: 'post', label: 'Post-Test', type: 'number' }]
+const pick = (r, names) => { for (const n of names) { const k = Object.keys(r).find((h) => h.replace(/[\s_-]/g, '').toLowerCase() === n); if (k && r[k] !== null && r[k] !== '') return r[k] } return null }
+function parseAttend(v) {
+  const s = String(v ?? '').trim().toLowerCase()
+  if (!s) return null
+  if (/ไม่|absent|^n$|^no$|^0$/.test(s)) return 'Absent'
+  if (/เข้าร่วม|attend|^y$|^yes$|^1$|✓|✔/.test(s)) return 'Attended'
+  return null
+}
+function downloadTemplate() {
+  exportExcel(`แบบฟอร์มผู้เข้าอบรม_${props.session?.session_code || props.sessionId}.xlsx`, [{ name: 'ผู้เข้าอบรม', title: props.session?.session_name,
+    columns: TEMPLATE_COLS, rows: rows.value.map((r) => ({ employee_code: r.employee_code, attendance: attendLabel(r.attendance_status), pre: r.pre_test_score, post: r.post_test_score })) }])
 }
 async function importFile(ev) {
   const file = ev.target.files[0]; ev.target.value = ''
@@ -191,21 +245,39 @@ async function importFile(ev) {
   try {
     const { readSheetRows } = await import('../lib/excel')
     const { rows: xr } = await readSheetRows(file)
-    const codes = [...new Set(xr.map((r) => String(r['รหัสพนักงาน'] ?? r['employee_code'] ?? r['Employee ID'] ?? Object.values(r)[0] ?? '').trim()).filter(Boolean))]
-    if (!codes.length) return toast('ไม่พบคอลัมน์รหัสพนักงาน (รหัสพนักงาน / employee_code)', 'err')
-    const padded = codes.map((c) => (/^\d+$/.test(c) && c.length < 5 ? c.padStart(5, '0') : c))
-    const emp = await must(supabase.from('employees').select('id, employee_code').in('employee_code', padded))
-    const missing = padded.filter((c) => !emp.find((e) => e.employee_code === c))
-    const n = await insertEmployees(emp.map((e) => e.id))
-    toast(`Import: เพิ่ม ${n} คน · ซ้ำ ${emp.length - n} · ไม่พบรหัส ${missing.length}${missing.length ? ' (' + missing.slice(0, 10).join(', ') + ')' : ''}`, missing.length ? 'err' : 'ok', 8000)
+    const items = xr.map((r) => ({ code: pad(String(pick(r, ['รหัสพนักงาน', 'รหัส', 'employeecode', 'employeeid']) ?? '').trim()),
+      attendance_status: parseAttend(pick(r, ['การเข้าร่วม', 'attendance'])),
+      pre_test_score: numOrNull(pick(r, ['pretest', 'pre'])), post_test_score: numOrNull(pick(r, ['posttest', 'post'])) })).filter((x) => x.code)
+    if (!items.length) return toast('ไม่พบคอลัมน์ "รหัสพนักงาน" — ใช้ปุ่ม "ดาวน์โหลดแบบฟอร์ม Excel"', 'err', 6000)
+    const emp = await must(supabase.from('employees').select('id, employee_code').in('employee_code', [...new Set(items.map((x) => x.code))]).is('deleted_at', null))
+    const idOf = Object.fromEntries(emp.map((e) => [e.employee_code, e.id]))
+    const missing = [...new Set(items.filter((x) => !idOf[x.code]).map((x) => x.code))]
+    const values = {}
+    for (const x of items) if (idOf[x.code]) values[idOf[x.code]] = { attendance_status: x.attendance_status, pre_test_score: x.pre_test_score, post_test_score: x.post_test_score }
+    const added = await insertEmployees(Object.keys(values).map(Number), values)
+    // people already in this course: update the values the file provides
+    let updated = 0
+    for (const r of rows.value) {
+      const v = values[r.employee_id]
+      if (!v) continue
+      const patch = {}
+      if (v.attendance_status) { patch.attendance_status = v.attendance_status; patch.completion_status = completionFor(v.attendance_status, r.completion_status) }
+      if (v.pre_test_score !== null) patch.pre_test_score = v.pre_test_score
+      if (v.post_test_score !== null) patch.post_test_score = v.post_test_score
+      if (Object.keys(patch).length) { await must(supabase.from('training_participants').update(patch).eq('id', r.id)); updated++ }
+    }
+    toast(`อัปโหลด Excel: เพิ่มใหม่ ${added} คน · อัปเดต ${updated} คน · ไม่พบรหัส ${missing.length}${missing.length ? ' (' + missing.slice(0, 10).join(', ') + ')' : ''}`, missing.length ? 'err' : 'ok', 8000)
     await load(); emit('changed')
   } catch (e) { toastError(e) }
 }
+
 async function doExport(kind) {
   const name = fileStamp('Training_Participants', [props.session?.session_code || props.sessionId])
-  const c = [{ key: 'employee_code', label: 'รหัสพนักงาน' }, ...cols.map((x) => ({ ...x, type: x.type === 'number' ? 'number' : undefined }))]
-  if (kind === 'csv') return exportCSV(`${name}.csv`, c, rows.value)
-  return exportExcel(`${name}.xlsx`, [{ name: 'Participants', title: props.session?.session_name, columns: c, rows: rows.value }])
+  const c = cols.filter((x) => x.key !== 'certificate_url').map((x) => (x.key === 'attendance_status' ? { key: 'attendance', label: x.label } : x))
+    .concat([{ key: 'certificate', label: 'Certificate' }])
+  const data = rows.value.map((r) => ({ ...r, attendance: attendLabel(r.attendance_status), certificate: r.certificate_url ? 'มีไฟล์' : '' }))
+  if (kind === 'csv') return exportCSV(`${name}.csv`, c, data)
+  return exportExcel(`${name}.xlsx`, [{ name: 'Participants', title: props.session?.session_name, columns: c, rows: data }])
 }
 onMounted(async () => { await load(); if (props.autofocus) nextTick(() => codeInput.value?.focus()) })
 defineExpose({ load })

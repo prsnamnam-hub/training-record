@@ -57,6 +57,7 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 | `database/migrations/001_schema.sql` | ตาราง, index, ข้อมูลอ้างอิง (Training Type, Expense Category) |
 | `database/migrations/002_functions.sql` | triggers (audit/stamp), views, `fact_filtered`, `rpc_dashboard`, `rpc_report`, import functions |
 | `database/migrations/003_rls.sql` | Row Level Security + grants (Admin / HR-Training / Viewer) |
+| `database/migrations/004_participant_tests_certificates.sql` | Pre-Test / Post-Test columns + private Storage bucket `certificates` (view = any role, upload = Admin/HR) |
 | `scripts/build_historical_seed.py` | อ่าน Excel → `database/seed/historical_*.sql` (gitignored — มีข้อมูลส่วนบุคคล) |
 | `scripts/run_historical_seed.mjs` | รัน seed เข้า Supabase ใน transaction เดียว + Verify กับ Excel (`npm run seed:run`) |
 | `src/lib/*` | config, auth, api (filter model เดียว), export (Excel/CSV/PDF), import mapping |
@@ -66,7 +67,7 @@ Import Center (web) ── .xlsx → mapping → dry-run preview ─────
 
 ## 5. Runbook — ติดตั้ง Database (ครั้งแรก)
 
-1. Supabase Dashboard → **SQL Editor** → รันตามลำดับ: `001_schema.sql` → `002_functions.sql` → `003_rls.sql` (รันซ้ำได้ — idempotent)
+1. Supabase Dashboard → **SQL Editor** → รันตามลำดับ: `001_schema.sql` → `002_functions.sql` → `003_rls.sql` → `004_participant_tests_certificates.sql` (รันซ้ำได้ — idempotent)
 2. สร้างไฟล์ seed ในเครื่อง: `npm run seed:build` (= `python3 scripts/build_historical_seed.py`)
 3. Import ข้อมูลเก่า ด้วย `scripts/run_historical_seed.mjs` — รันทุก chunk ใน **transaction เดียว** (สำเร็จทั้งหมดหรือไม่เปลี่ยนอะไรเลย) แล้ว Verify กับตัวเลขจาก Excel อัตโนมัติ
    * Connection string: Supabase › **Connect** › **Session pooler** (มีรหัสผ่าน DB — ส่งผ่าน env เท่านั้น ห้าม commit/บันทึกลงไฟล์)
