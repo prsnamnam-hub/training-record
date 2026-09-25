@@ -53,7 +53,7 @@ import { supabase, must } from '../../lib/supabase'
 import { auth } from '../../lib/auth'
 import { dateTimeTH } from '../../lib/format'
 import { toastOk, toastError } from '../../lib/toast'
-const MIN_PASSWORD = 8
+const MIN_PASSWORD = 6
 const rows = ref([]); const loading = ref(true); const busy = ref(false)
 const form = ref(null); const pw = ref(null)
 const cols = [{ key: 'email', label: 'อีเมล' }, { key: 'full_name', label: 'ชื่อ' }, { key: 'role', label: 'Role' }, { key: 'is_active', label: 'สถานะ' },

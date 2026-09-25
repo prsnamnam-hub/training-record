@@ -10,7 +10,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ROLES = ['admin', 'hr_training', 'viewer']
-const MIN_PASSWORD = 8
+const MIN_PASSWORD = 6 // lowest Supabase Auth allows (project setting "Minimum password length" = 6)
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
