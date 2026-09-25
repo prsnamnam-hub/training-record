@@ -2,16 +2,18 @@
   <div class="shell">
     <aside class="sidebar" :class="{ open: menuOpen }" @click="menuOpen = false">
       <div class="brand">
-        <img class="logo" :src="logoWhite" alt="ASSET WISE" />
+        <img class="logo" :src="logo" alt="ASSET WISE" />
         <small>Training Record</small>
       </div>
       <nav class="nav">
         <RouterLink v-for="s in sections" :key="s.key" :to="s.items[0].to" :class="{ on: current?.key === s.key }">{{ s.label }}</RouterLink>
       </nav>
+      <div class="sidebar-foot">{{ APP_NAME }}</div>
     </aside>
+    <div class="sidebar-back" :class="{ open: menuOpen }" @click="menuOpen = false"></div>
     <div class="main">
       <header class="topbar no-print">
-        <button class="btn ghost menu-btn" @click.stop="menuOpen = !menuOpen">☰</button>
+        <button class="btn ghost menu-btn" aria-label="เมนู" @click.stop="menuOpen = !menuOpen">☰</button>
         <form class="search" @submit.prevent="goSearch">
           <input v-model="q" placeholder="ค้นหา รหัสพนักงาน / ชื่อ / หลักสูตร / ฝ่าย / Training ID / Provider" />
         </form>
@@ -20,7 +22,7 @@
           <div class="avatar">{{ initials }}</div>
           <div class="name"><div>{{ auth.profile?.full_name || auth.profile?.email }}</div>
             <div class="small muted">{{ ROLE_LABEL[role] }}</div></div>
-          <button class="btn sm" @click="logout">ออกจากระบบ</button>
+          <button class="btn sm ghost" @click="logout">ออกจากระบบ</button>
         </div>
       </header>
       <main class="content">
@@ -43,7 +45,7 @@ import { APP_NAME, APP_TAGLINE } from '../lib/config'
 import { auth, role, ROLE_LABEL, signOut, canEdit, isAdmin } from '../lib/auth'
 import { MENU, sectionOf } from '../lib/menu'
 
-const logoWhite = import.meta.env.BASE_URL + 'logo-assetwise-white.png'
+const logo = import.meta.env.BASE_URL + 'logo-assetwise.png'
 const route = useRoute()
 const router = useRouter()
 const q = ref('')

@@ -5,14 +5,15 @@ const props = defineProps({ option: Object, tall: Boolean, height: String })
 const el = ref(null)
 const chart = shallowRef(null)
 let ro
-const PALETTE = ['#0f4c81', '#f5b400', '#2a9d8f', '#e76f51', '#8e6cc9', '#6c8ead', '#d4a373', '#52b788', '#bc4749', '#577590']
+// validated categorical order (dataviz reference palette, light mode) — fixed order, never cycled
+const PALETTE = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948']
 async function render() {
   if (!el.value || !props.option) return
   const echarts = await import('echarts')
   if (!chart.value) chart.value = echarts.init(el.value, null, { renderer: 'canvas' })
   chart.value.setOption({
     color: PALETTE,
-    textStyle: { fontFamily: 'Sarabun, sans-serif' },
+    textStyle: { fontFamily: "'IBM Plex Sans Thai', Inter, sans-serif", color: '#4b5768' },
     grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
     tooltip: { trigger: 'axis', confine: true },
     ...props.option,
