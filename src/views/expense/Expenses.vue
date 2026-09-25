@@ -19,10 +19,6 @@
       <KpiCard label="จำนวนรอบอบรม" :value="num(new Set(rows.map((r) => r.session_id)).size)" />
       <KpiCard :label="kind === 'food' ? 'Quantity รวม (ที่/ชุด)' : 'ค่าเฉลี่ยต่อรอบ'" :value="kind === 'food' ? num(sumQty) : money(sumAmount / (new Set(rows.map((r) => r.session_id)).size || 1))" />
     </div>
-    <div class="grid g2 mb" v-if="rows.length">
-      <div class="card"><div class="card-title"><h3>ตามประเภทค่าใช้จ่าย</h3></div><EChart :option="chartCat" /></div>
-      <div class="card"><div class="card-title"><h3>รายเดือน</h3></div><EChart :option="chartMonth" /></div>
-    </div>
     <div class="card">
       <DataTable :columns="cols" :rows="rows" :loading="loading">
         <template #cell-session_name="{ row }"><RouterLink :to="`/training/sessions/${row.session_id}?tab=expense`">{{ row.session_name }}</RouterLink></template>
@@ -48,7 +44,6 @@ import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import MultiSelect from '../../components/MultiSelect.vue'
 import KpiCard from '../../components/KpiCard.vue'
-import EChart from '../../components/EChart.vue'
 import Modal from '../../components/Modal.vue'
 import ExpenseLines from '../../components/ExpenseLines.vue'
 import ExportMenu from '../../components/ExportMenu.vue'
@@ -84,15 +79,6 @@ const cols = [
 ]
 const sumAmount = computed(() => rows.value.reduce((a, r) => a + Number(r.amount), 0))
 const sumQty = computed(() => rows.value.reduce((a, r) => a + Number(r.quantity), 0))
-const chartCat = computed(() => {
-  const m = {}; rows.value.forEach((r) => { m[r.category] = (m[r.category] || 0) + Number(r.amount) })
-  return { tooltip: { trigger: 'item' }, legend: { bottom: 0, type: 'scroll' }, series: [{ type: 'pie', radius: ['40%', '70%'], center: ['50%', '42%'], data: Object.entries(m).map(([name, value]) => ({ name, value: Math.round(value) })) }] }
-})
-const chartMonth = computed(() => {
-  const m = {}; rows.value.forEach((r) => { const k = (r.expense_date || r.start_date || '').slice(0, 7) || 'ไม่ระบุ'; m[k] = (m[k] || 0) + Number(r.amount) })
-  const keys = Object.keys(m).sort()
-  return { xAxis: { type: 'category', data: keys }, yAxis: { type: 'value' }, series: [{ type: 'bar', name: 'บาท', data: keys.map((k) => Math.round(m[k])) }] }
-})
 async function load() {
   loading.value = true
   try {

@@ -19,9 +19,6 @@
       <KpiCard label="Training Hours" :value="num(tot.hours, 1)" unit="ชม." color="var(--c6)" />
       <KpiCard label="Training Cost" :value="money(tot.cost)" unit="บาท" :sub="tot.participants ? `Cost/Participant ${money(tot.cost / tot.participants)}` : ''" color="var(--c4)" />
     </div>
-    <div class="card mt" v-if="rows.length && chart">
-      <EChart :option="chartOption" tall />
-    </div>
     <div class="card mt">
       <div class="card-title"><h2>{{ title }}</h2><span class="hint">{{ rows.length }} รายการ</span></div>
       <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="group_key" :size="100"
@@ -39,7 +36,6 @@ import { useRouter } from 'vue-router'
 import FilterBar from './FilterBar.vue'
 import DataTable from './DataTable.vue'
 import KpiCard from './KpiCard.vue'
-import EChart from './EChart.vue'
 import ExportMenu from './ExportMenu.vue'
 import { report, filterOptions, fetchAll } from '../lib/api'
 import { supabase } from '../lib/supabase'
@@ -117,19 +113,6 @@ function footer(c) {
   if (c.key === 'cost_per_participant') return tot.value.participants ? money(tot.value.cost / tot.value.participants) : '-'
   return ''
 }
-const chartOption = computed(() => {
-  const top = rows.value.slice(0, ['month', 'year_month', 'year'].includes(props.group) ? 60 : 20)
-  const horizontal = !['month', 'year_month', 'year'].includes(props.group)
-  const m = METRIC[props.chart]
-  const cat = { type: 'category', data: top.map((r) => r.group_label), ...(horizontal ? { inverse: true, axisLabel: { width: 200, overflow: 'truncate' } } : {}) }
-  return {
-    grid: { left: 8, right: 40, top: 30, bottom: 8, containLabel: true },
-    legend: { top: 0 },
-    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: horizontal ? { type: 'value' } : cat, yAxis: horizontal ? cat : { type: 'value' },
-    series: [{ name: m.label, type: 'bar', data: top.map((r) => r[props.chart]), label: { show: top.length <= 20, position: horizontal ? 'right' : 'top' } }],
-  }
-})
 const filterText = ref('')
 async function load() {
   loading.value = true; err.value = ''

@@ -14,10 +14,6 @@
       <KpiCard label="Cost / Training Hour" :value="totals.sessionHours ? money(totals.cost / totals.sessionHours) : '-'" unit="บาท" color="var(--c4)" />
     </div>
     <div v-if="c.objective" class="card mb"><b>Objective:</b> {{ c.objective }}</div>
-    <div class="grid g2">
-      <div class="card"><div class="card-title"><h3>ผู้เข้าอบรมรายปี</h3></div><EChart :option="chartYear" /></div>
-      <div class="card"><div class="card-title"><h3>ผู้เข้าอบรมตามฝ่าย</h3></div><EChart :option="chartDept" /></div>
-    </div>
     <div class="card mt">
       <div class="card-title"><h3>รอบอบรม (Training Session)</h3></div>
       <DataTable :columns="cols" :rows="sessions" :paginate="false" @row-click="(r) => $router.push(`/training/sessions/${r.id}`)">
@@ -32,7 +28,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import PageHeader from '../../components/PageHeader.vue'
 import KpiCard from '../../components/KpiCard.vue'
-import EChart from '../../components/EChart.vue'
 import DataTable from '../../components/DataTable.vue'
 import ExportMenu from '../../components/ExportMenu.vue'
 import { supabase, must } from '../../lib/supabase'
@@ -53,16 +48,6 @@ const totals = computed(() => sessions.value.reduce((a, s) => ({
   participants: a.participants + s.participant_count, cost: a.cost + Number(s.total_cost || 0),
   sessionHours: a.sessionHours + Number(s.training_hours || 0), personHours: a.personHours + Number(s.training_hours || 0) * s.participant_count,
 }), { participants: 0, cost: 0, sessionHours: 0, personHours: 0 }))
-const chartYear = computed(() => {
-  const m = {}
-  sessions.value.forEach((s) => { m[s.fiscal_year + 543] = (m[s.fiscal_year + 543] || 0) + s.participant_count })
-  return { xAxis: { type: 'category', data: Object.keys(m) }, yAxis: { type: 'value' }, series: [{ type: 'bar', name: 'คน-ครั้ง', data: Object.values(m), label: { show: true, position: 'top' } }] }
-})
-const chartDept = computed(() => ({
-  grid: { left: 8, right: 30, top: 10, bottom: 8, containLabel: true },
-  xAxis: { type: 'value' }, yAxis: { type: 'category', inverse: true, data: byDept.value.map((d) => d.group_label), axisLabel: { width: 160, overflow: 'truncate' } },
-  series: [{ type: 'bar', name: 'คน-ครั้ง', data: byDept.value.map((d) => d.participants), label: { show: true, position: 'right' } }],
-}))
 async function doExport(kind) {
   const name = fileStamp('Training_Course', [c.value.course_code])
   if (kind === 'pdf') return exportPDF(page.value, `${name}.pdf`)

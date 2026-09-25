@@ -33,7 +33,7 @@ const routes = [
       { path: 'master/:entity', component: v('master/MasterData'), meta: { title: 'Master Data' } },
       { path: 'expense/:kind', component: v('expense/Expenses'), meta: { title: 'Training Expense' } },
       { path: 'reports/center', component: v('reports/ReportCenter'), meta: { title: 'Report Center' } },
-      { path: 'reports/course', component: v('reports/ReportPreset'), props: { reportId: 'course' }, meta: { title: 'รายงานหลักสูตร' } },
+      { path: 'reports/course', component: v('reports/CourseReport'), meta: { title: 'รายงานหลักสูตร' } },
       { path: 'reports/department', component: v('reports/DepartmentReport'), meta: { title: 'รายงานฝ่าย' } },
       { path: 'reports/employee', component: v('reports/EmployeeHistory'), meta: { title: 'รายงานรายบุคคล' } },
       { path: 'reports/monthly', component: v('reports/MonthlyReport'), meta: { title: 'Monthly Training Management Report' } },

@@ -65,7 +65,6 @@
             <ul class="rs-bars">
               <li v-for="y in byYear" :key="y.label">
                 <span class="k">{{ y.label }}</span>
-                <span class="bar"><i :style="{ width: pct(y.n, maxYear) }"></i></span>
                 <span class="v">{{ y.n }}<em :class="y.n >= target ? 'ok' : 'no'">{{ y.n >= target ? '✓' : '–' }}</em></span>
               </li>
             </ul>
@@ -74,7 +73,6 @@
             <ul class="rs-bars">
               <li v-for="t in byType" :key="t.label">
                 <span class="k">{{ t.label }}</span>
-                <span class="bar"><i :style="{ width: pct(t.n, hist.length) }"></i></span>
                 <span class="v">{{ t.n }}</span>
               </li>
             </ul>
@@ -139,7 +137,6 @@ const cols = [
   { key: 'certificate', label: 'Certificate' },
 ]
 const sumBy = (k) => hist.value.reduce((a, h) => a + Number(h[k] || 0), 0)
-const pct = (n, max) => `${max ? Math.max(4, Math.round((n / max) * 100)) : 0}%`
 const count = (key) => Object.entries(hist.value.reduce((m, h) => { const k = key(h); m[k] = (m[k] || 0) + 1; return m }, {}))
   .map(([label, n]) => ({ label, n }))
 const initials = computed(() => (emp.value?.first_name_th || emp.value?.full_name || '?').trim().slice(0, 1))
@@ -147,7 +144,6 @@ const attendedCount = computed(() => hist.value.filter((h) => h.attendance_statu
 const certCount = computed(() => hist.value.filter((h) => h.certificate_url || h.certificate_no).length)
 const lastDate = computed(() => hist.value.map((h) => h.start_date).filter((d) => d && d <= today).sort().pop())
 const byYear = computed(() => count((h) => String(be(h.year))).sort((a, b) => a.label.localeCompare(b.label)))
-const maxYear = computed(() => Math.max(target.value, ...byYear.value.map((y) => y.n)))
 const byType = computed(() => count((h) => h.training_type || 'ไม่ระบุ').sort((a, b) => b.n - a.n))
 const byCategory = computed(() => count((h) => h.category_name || '').filter((c) => c.label).sort((a, b) => b.n - a.n).slice(0, 8))
 const timeline = computed(() => {
@@ -234,10 +230,9 @@ onMounted(() => { const id = route.params.id || route.query.id; if (id) pick(Num
 .rs-stats span { font-size: 7.5pt; color: var(--ink-3); }
 .rs-note { margin: 0 0 5mm; font-size: 8.5pt; color: var(--ink-3); }
 .rs-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.6mm; font-size: 8.5pt; }
-.rs-bars li { display: grid; grid-template-columns: 15mm 1fr 10mm; align-items: center; gap: 2mm; }
+.rs-bars li { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2mm; padding: .8mm 0; border-bottom: 1px dotted #d9dfe7; }
+.rs-bars li:last-child { border-bottom: none; }
 .rs-bars .k { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rs-bars .bar { height: 2.2mm; background: #e4e9f0; border-radius: 99px; overflow: hidden; }
-.rs-bars .bar i { display: block; height: 100%; background: var(--brand-500); border-radius: 99px; }
 .rs-bars .v { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
 .rs-bars em { font-style: normal; margin-left: 1mm; }
 .rs-bars em.ok { color: var(--ok); } .rs-bars em.no { color: var(--ink-3); }
@@ -267,6 +262,6 @@ onMounted(() => { const id = route.params.id || route.query.id; if (id) pick(Num
   .a4-scroll { overflow: visible; padding: 0; }
   .a4-sheet { page: resume; box-shadow: none; border-radius: 0; margin: 0; min-height: 0; }
   .rs-side { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .rs-avatar, .rs-bars .bar i, .tl-type, .tl-item::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rs-avatar, .tl-type, .tl-item::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
