@@ -14,9 +14,8 @@
       <div class="card-title"><h3>ข้อมูลหลักสูตร</h3></div>
       <div class="form-grid">
         <div class="field wide"><label>หลักสูตร <span class="req">*</span></label>
-          <input v-model="courseName" class="input" list="course-list" placeholder="พิมพ์เพื่อค้นหาหลักสูตรเดิม หรือพิมพ์ชื่อหลักสูตรใหม่" @change="onCourse" />
-          <datalist id="course-list"><option v-for="c in courses" :key="c.id" :value="c.course_name" /></datalist>
-          <span v-if="courseName && !selectedCourse" class="small" style="color:var(--warn)">หลักสูตรใหม่ — ระบบจะเพิ่มในฐานข้อมูลหลักสูตรให้อัตโนมัติ</span>
+          <!-- free text (no suggestion dropdown); an existing course with the same name is still matched on save -->
+          <input v-model="courseName" class="input" autocomplete="off" placeholder="พิมพ์ชื่อหลักสูตร" @change="onCourse" />
         </div>
         <div class="field"><label>รุ่นที่</label>
           <input v-model="batchNo" class="input" placeholder="เช่น 3 (ไม่มีรุ่นให้เว้นว่าง)" @input="composeName" /></div>
