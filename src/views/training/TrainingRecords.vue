@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Training Record" subtitle="ประวัติการฝึกอบรมรายบุคคล (1 รายการ = พนักงาน 1 คน × 1 รอบอบรม) — Historical Excel + ข้อมูลใหม่ในฐานข้อมูลเดียวกัน">
+    <PageHeader title="ประวัติการอบรม" subtitle="ประวัติการอบรมรายบุคคล — ข้อมูลย้อนหลังจาก Excel และข้อมูลใหม่ รวมในที่เดียว">
       <ExportMenu :handler="doExport" :pdf="false" />
     </PageHeader>
     <div class="card">

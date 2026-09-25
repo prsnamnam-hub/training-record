@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Training Calendar" subtitle="ปฏิทินการอบรม — วันที่ / หลักสูตร / วิทยากร / สถานที่ / ผู้เข้าอบรม / สถานะ">
+    <PageHeader title="ปฏิทินอบรม" subtitle="ดูหลักสูตรที่จัดในแต่ละวัน — คลิกรายการเพื่อดูรายละเอียด">
       <div class="tabs" style="margin:0;border:none">
         <button v-for="m in ['month', 'week', 'day']" :key="m" :class="{ on: view === m }" @click="view = m">{{ { month: 'เดือน', week: 'สัปดาห์', day: 'วัน' }[m] }}</button>
       </div>

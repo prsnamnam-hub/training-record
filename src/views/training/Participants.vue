@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Participants" subtitle="จัดการผู้เข้าอบรมรายรอบ — Add / Remove / Search Employee / Filter Department / Bulk Add / Import Excel" />
+    <PageHeader title="ผู้เข้าอบรม" subtitle="จัดการผู้เข้าอบรมรายรอบ — Add / Remove / Search Employee / Filter Department / Bulk Add / Import Excel" />
     <div class="card mb">
       <div class="field"><label>เลือก Training Session</label>
         <div class="row">

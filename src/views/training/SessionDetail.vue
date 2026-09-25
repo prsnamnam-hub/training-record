@@ -1,8 +1,8 @@
 <template>
   <div v-if="s">
-    <PageHeader :title="s.session_name" :crumb="`Training Session · ${s.session_code || ''}${s.legacy_course_id ? ' · Excel Course ID ' + s.legacy_course_id : ''}`"
+    <PageHeader :title="s.session_name" :crumb="`${s.session_code || ''}${s.legacy_course_id ? ' · Excel ID ' + s.legacy_course_id : ''}`"
       :subtitle="`${s.course_name} · ${dateRange}`">
-      <RouterLink to="/training/sessions" class="btn">‹ รายการ</RouterLink>
+      <RouterLink to="/training/sessions" class="btn">‹ กลับไปรายการ</RouterLink>
       <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn">แก้ไขข้อมูล</RouterLink>
       <button v-if="canEdit && s.status !== 'Cancelled'" class="btn danger" @click="cancel">ยกเลิกรอบอบรม</button>
     </PageHeader>
@@ -13,12 +13,12 @@
     <div class="grid g5 mb">
       <KpiCard label="ผู้เข้าอบรม" :value="num(s.participant_count)" unit="คน" />
       <KpiCard label="ชั่วโมงอบรม" :value="s.training_hours ? num(s.training_hours, 1) : '-'" unit="ชม." color="var(--c6)" />
-      <KpiCard label="Total Cost" :value="money(s.total_cost)" unit="บาท" color="var(--c4)" />
-      <KpiCard label="Cost / Participant" :value="money(s.cost_per_participant)" unit="บาท" color="var(--c4)" />
-      <KpiCard label="Cost / Training Hour" :value="money(s.cost_per_hour)" unit="บาท" color="var(--c4)" />
+      <KpiCard label="ค่าใช้จ่ายรวม" :value="money(s.total_cost)" unit="บาท" color="var(--c4)" />
+      <KpiCard label="ค่าใช้จ่ายต่อคน" :value="money(s.cost_per_participant)" unit="บาท" color="var(--c4)" />
+      <KpiCard label="ค่าใช้จ่ายต่อชั่วโมง" :value="money(s.cost_per_hour)" unit="บาท" color="var(--c4)" />
     </div>
     <div class="card mb">
-      <div class="card-title"><h3>Part 1 — ข้อมูลหลักสูตร</h3>
+      <div class="card-title"><h3>ข้อมูลหลักสูตร</h3>
         <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn sm">แก้ไข</RouterLink></div>
       <div class="form-grid">
         <div><div class="small muted">หลักสูตร</div><RouterLink :to="`/master/courses/${s.course_id}`">{{ s.course_name }}</RouterLink></div>
@@ -35,8 +35,8 @@
       </div>
     </div>
     <div class="tabs">
-      <button :class="{ on: tab === 'p' }" @click="tab = 'p'">Part 2 — ผู้เข้าอบรม ({{ s.participant_count }})</button>
-      <button :class="{ on: tab === 'e' }" @click="tab = 'e'">ค่าใช้จ่าย (Expense)</button>
+      <button :class="{ on: tab === 'p' }" @click="tab = 'p'">ผู้เข้าอบรม ({{ s.participant_count }})</button>
+      <button :class="{ on: tab === 'e' }" @click="tab = 'e'">ค่าใช้จ่าย</button>
     </div>
     <div class="card">
       <SessionParticipants v-if="tab === 'p'" :session-id="s.id" :session="s" :autofocus="route.query.step === '2'" @changed="load" />

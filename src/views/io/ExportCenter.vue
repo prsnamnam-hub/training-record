@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Export Report" subtitle="ส่งออกข้อมูลและรายงานทั้งหมดของ ASW Training Record — Excel / CSV / PDF" />
+    <PageHeader title="Export ข้อมูล" subtitle="ส่งออกข้อมูลและรายงานทั้งหมดของ ASW Training Record — Excel / CSV / PDF" />
     <div class="grid g3">
       <div v-for="x in items" :key="x.to" class="card">
         <h3>{{ x.title }}</h3>

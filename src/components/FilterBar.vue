@@ -1,21 +1,27 @@
 <template>
-  <div class="filterbar">
-    <div v-for="f in fields" :key="f" class="field">
-      <label>{{ DEF[f].label }}</label>
-      <template v-if="f === 'date_from' || f === 'date_to'">
-        <input type="date" class="input" :value="modelValue[f] || ''" @input="set(f, $event.target.value || null)" />
-      </template>
-      <MultiSelect v-else :model-value="modelValue[DEF[f].key] || []" :options="opts(f)"
-                   @update:model-value="set(DEF[f].key, $event)" />
-    </div>
-    <div class="field" style="flex:0 0 auto; min-width:0">
-      <label>&nbsp;</label>
-      <button class="btn sm" @click="reset">ล้างตัวกรอง</button>
+  <div>
+    <div class="filterbar">
+      <div v-for="f in shownFields" :key="f" class="field">
+        <label>{{ DEF[f].label }}</label>
+        <template v-if="f === 'date_from' || f === 'date_to'">
+          <input type="date" class="input" :value="modelValue[f] || ''" @input="set(f, $event.target.value || null)" />
+        </template>
+        <MultiSelect v-else :model-value="modelValue[DEF[f].key] || []" :options="opts(f)"
+                     @update:model-value="set(DEF[f].key, $event)" />
+      </div>
+      <div class="field filter-actions">
+        <label>&nbsp;</label>
+        <div class="row" style="flex-wrap:nowrap">
+          <button v-if="extraFields.length" class="btn sm" :class="{ on: expanded }" @click="expanded = !expanded">
+            {{ expanded ? 'ซ่อนตัวกรอง' : 'ตัวกรองเพิ่มเติม' }}<span v-if="!expanded && hiddenActive" class="count">{{ hiddenActive }}</span></button>
+          <button v-if="activeCount" class="btn sm ghost" @click="reset">ล้างตัวกรอง</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import MultiSelect from './MultiSelect.vue'
 import { filterOptions } from '../lib/api'
 import { TH_MONTHS } from '../lib/format'
@@ -23,9 +29,17 @@ import { TH_MONTHS } from '../lib/format'
 const props = defineProps({
   modelValue: { type: Object, required: true },
   fields: { type: Array, default: () => ['years', 'months', 'departments', 'training_types', 'categories', 'courses'] },
+  // how many fields are always visible; the rest sit behind "ตัวกรองเพิ่มเติม"
+  primary: { type: Number, default: 3 },
 })
 const emit = defineEmits(['update:modelValue'])
 const o = ref(null)
+const expanded = ref(false)
+const isSet = (f) => { const v = props.modelValue[DEF[f].key]; return Array.isArray(v) ? v.length > 0 : !!v }
+const extraFields = computed(() => props.fields.slice(props.primary))
+const shownFields = computed(() => (expanded.value ? props.fields : props.fields.slice(0, props.primary)))
+const activeCount = computed(() => props.fields.filter(isSet).length)
+const hiddenActive = computed(() => extraFields.value.filter(isSet).length)
 const DEF = {
   years: { label: 'ปี (พ.ศ.)', key: 'years' },
   months: { label: 'เดือน', key: 'months' },

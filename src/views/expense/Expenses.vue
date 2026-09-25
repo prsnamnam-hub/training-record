@@ -1,12 +1,12 @@
 <template>
   <div>
-    <PageHeader :title="meta.title" :subtitle="meta.subtitle" crumb="Expense">
+    <PageHeader :title="meta.title" :subtitle="meta.subtitle">
       <ExportMenu :handler="doExport" :pdf="false" />
       <button v-if="canEdit" class="btn primary" @click="openAdd">+ เพิ่มค่าใช้จ่าย</button>
     </PageHeader>
     <div class="card">
       <div class="filterbar">
-        <div class="field" style="flex:2;max-width:none"><label>ค้นหา</label><input v-model="search" class="input" placeholder="หลักสูตร / รายละเอียด / Vendor / เลขที่ใบแจ้งหนี้" @input="debounced" /></div>
+        <div class="field" style="flex:2;max-width:none"><label>ค้นหา</label><input v-model="search" class="input" placeholder="ชื่อหลักสูตร / รุ่น" @input="debounced" /></div>
         <div class="field"><label>ปี (พ.ศ.)</label><MultiSelect v-model="f.years" :options="yearOpts" /></div>
         <div class="field"><label>เดือน</label><MultiSelect v-model="f.months" :options="TH_MONTHS.map((m, i) => ({ id: i + 1, name: m }))" /></div>
         <div class="field"><label>ประเภทค่าใช้จ่าย</label><MultiSelect v-model="f.cats" :options="catOpts" /></div>
@@ -26,12 +26,11 @@
     <div class="card">
       <DataTable :columns="cols" :rows="rows" :loading="loading">
         <template #cell-session_name="{ row }"><RouterLink :to="`/training/sessions/${row.session_id}?tab=expense`">{{ row.session_name }}</RouterLink></template>
-        <template #cell-meal_type="{ row }">{{ row.meal_type ? MEAL_TH[row.meal_type] : '-' }}</template>
       </DataTable>
     </div>
 
-    <Modal :open="adding" title="เพิ่มค่าใช้จ่าย (ต้องผูกกับ Training Session)" wide @close="adding = false">
-      <div class="field mb"><label>Training Session <span class="req">*</span></label>
+    <Modal :open="adding" title="เพิ่มค่าใช้จ่าย — เลือกหลักสูตร" wide @close="adding = false">
+      <div class="field mb"><label>หลักสูตร / รุ่น <span class="req">*</span></label>
         <input v-model="sq" class="input" placeholder="พิมพ์ชื่อหลักสูตรเพื่อค้นหา" @input="searchSessions" />
         <select v-model="newSession" class="input mt" size="5">
           <option v-for="s in sessionResults" :key="s.id" :value="s.id">{{ s.session_name }} · {{ dateTH(s.start_date) }} · {{ s.participant_count }} คน</option>
@@ -64,9 +63,9 @@ import { exportExcel, exportCSV, fileStamp } from '../../lib/export'
 const route = useRoute()
 const kind = route.params.kind
 const META = {
-  all: { title: 'Training Expense', subtitle: 'ค่าใช้จ่ายการอบรมทั้งหมด (ผูกกับ Training Session) — Total Cost = Course Fee + Trainer Fee + Food + Accommodation + Transportation + Venue + Material + Other' },
-  food: { title: 'Food Expense', subtitle: 'ค่าอาหาร/เครื่องดื่ม — Total Food Cost = Quantity × Unit Price' },
-  other: { title: 'Other Expense', subtitle: 'ค่าใช้จ่ายอื่น ๆ — Printing / Material / Equipment / Parking / Miscellaneous / Other' },
+  all: { title: 'ค่าใช้จ่ายการอบรม', subtitle: 'ค่าใช้จ่ายของทุกหลักสูตร — เพิ่ม/แก้ไขได้ในหน้ารายละเอียดของแต่ละหลักสูตร' },
+  food: { title: 'ค่าอาหาร', subtitle: 'ค่าอาหาร / เครื่องดื่ม ของทุกหลักสูตร' },
+  other: { title: 'ค่าใช้จ่ายอื่น ๆ', subtitle: 'ค่าใช้จ่ายอื่น ๆ ของทุกหลักสูตร' },
 }
 const meta = META[kind] || META.all
 const rows = ref([]); const loading = ref(false); const search = ref('')
@@ -80,11 +79,8 @@ function scopeCat(c) {
   return true
 }
 const cols = [
-  { key: 'expense_date', label: 'วันที่', type: 'date', sortValue: (r) => r.expense_date || r.start_date },
-  { key: 'session_name', label: 'หลักสูตร / รอบอบรม' }, { key: 'category', label: 'ประเภท' }, { key: 'description', label: 'รายละเอียด' },
-  ...(kind === 'food' ? [{ key: 'meal_type', label: 'มื้อ' }] : []),
-  { key: 'quantity', label: 'Quantity', type: 'number' }, { key: 'unit_price', label: 'Unit Price', type: 'money' }, { key: 'amount', label: 'Total', type: 'money' },
-  { key: 'vendor', label: 'Vendor' }, { key: 'invoice_no', label: 'เลขที่เอกสาร' },
+  { key: 'session_name', label: 'หลักสูตร / รุ่น' }, { key: 'category', label: 'ประเภทค่าใช้จ่าย' },
+  { key: 'quantity', label: 'จำนวน', type: 'number' }, { key: 'unit_price', label: 'ราคา/หน่วย', type: 'money' }, { key: 'amount', label: 'รวม', type: 'money' },
 ]
 const sumAmount = computed(() => rows.value.reduce((a, r) => a + Number(r.amount), 0))
 const sumQty = computed(() => rows.value.reduce((a, r) => a + Number(r.quantity), 0))

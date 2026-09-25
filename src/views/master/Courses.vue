@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Training Course" subtitle="Course Master — 1 หลักสูตรมีได้หลายรอบ/รุ่น (Training Session)" crumb="Master Data">
+    <PageHeader title="หลักสูตร" subtitle="รายชื่อหลักสูตรทั้งหมด (1 หลักสูตรมีได้หลายรุ่น) — คลิกเพื่อดูสถิติของหลักสูตร">
       <ExportMenu :handler="doExport" :pdf="false" />
       <button v-if="canEdit" class="btn primary" @click="open({})">+ เพิ่มหลักสูตร</button>
     </PageHeader>

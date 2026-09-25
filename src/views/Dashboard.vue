@@ -1,6 +1,6 @@
 <template>
   <div ref="page">
-    <PageHeader title="ASW Training Record Dashboard"
+    <PageHeader title="Dashboard"
       :subtitle="`รายงานสรุปการฝึกอบรม · ช่วงสะสม ม.ค. – ${TH_MONTHS[month - 1]} ${be(year)}`">
       <ExportMenu :handler="doExport" />
     </PageHeader>

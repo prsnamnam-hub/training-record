@@ -3,7 +3,7 @@
     <nav class="chips mb">
       <RouterLink v-for="(c, k) in CONFIG" :key="k" :to="`/master/${k}`" :class="{ on: k === entity }">{{ c.title }}</RouterLink>
     </nav>
-    <PageHeader :title="cfg.title" :subtitle="cfg.subtitle" crumb="ข้อมูลหลัก">
+    <PageHeader :title="cfg.title" :subtitle="cfg.subtitle">
       <ExportMenu :handler="doExport" :pdf="false" />
       <button v-if="canEdit" class="btn primary" @click="open({})">+ เพิ่ม</button>
     </PageHeader>

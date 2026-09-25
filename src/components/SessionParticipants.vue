@@ -144,7 +144,7 @@ async function addPicked() {
     await load(); emit('changed')
   } catch (e) { toastError(e) } finally { saving.value = false }
 }
-// --- Part 2: add participants by employee code (data comes from the employee master) ---
+// --- add participants by employee code (data comes from the employee master) ---
 const code = ref(''); const preview = ref(null); const codeInput = ref(null)
 const pad = (c) => (/^\d+$/.test(c) && c.length < 5 ? c.padStart(5, '0') : c)
 const parseCodes = (t) => [...new Set(t.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean).map(pad))]

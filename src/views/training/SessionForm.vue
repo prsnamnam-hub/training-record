@@ -1,7 +1,7 @@
 <template>
   <div>
     <PageHeader :title="isEdit ? 'แก้ไขข้อมูลหลักสูตร' : 'บันทึกหลักสูตรใหม่'"
-      :subtitle="isEdit ? form.session_name : 'Part 1 กรอกข้อมูลหลักสูตร → บันทึก → Part 2 เพิ่มผู้เข้าอบรมด้วยรหัสพนักงาน'">
+      :subtitle="isEdit ? form.session_name : 'กรอกข้อมูลหลักสูตร แล้วบันทึก — ขั้นต่อไปคีย์รหัสพนักงานเพื่อเพิ่มผู้เข้าอบรม'">
       <RouterLink :to="isEdit ? `/training/sessions/${id}` : '/training/sessions'" class="btn">ยกเลิก</RouterLink>
     </PageHeader>
 
@@ -11,7 +11,7 @@
     </ol>
 
     <div class="card">
-      <div class="card-title"><h3>Part 1 — ข้อมูลหลักสูตร</h3></div>
+      <div class="card-title"><h3>ข้อมูลหลักสูตร</h3></div>
       <div class="form-grid">
         <div class="field wide"><label>หลักสูตร <span class="req">*</span></label>
           <input v-model="courseName" class="input" list="course-list" placeholder="พิมพ์เพื่อค้นหาหลักสูตรเดิม หรือพิมพ์ชื่อหลักสูตรใหม่" @change="onCourse" />
@@ -61,7 +61,7 @@
     <div v-if="error" class="alert err mt">{{ error }}</div>
     <div class="row mt" style="justify-content:flex-end">
       <button class="btn primary" :disabled="saving" @click="save">
-        {{ saving ? 'กำลังบันทึก...' : isEdit ? 'บันทึก' : 'บันทึก และไป Part 2: เพิ่มผู้เข้าอบรม ›' }}</button>
+        {{ saving ? 'กำลังบันทึก...' : isEdit ? 'บันทึก' : 'บันทึก และเพิ่มผู้เข้าอบรม ›' }}</button>
     </div>
   </div>
 </template>

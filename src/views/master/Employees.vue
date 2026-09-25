@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Employee" subtitle="Employee Master — ข้อมูลจาก Employee Info Report (Excel) + เพิ่ม/แก้ไขในระบบ" crumb="Master Data">
+    <PageHeader title="รายชื่อพนักงาน" subtitle="ฐานข้อมูลพนักงาน — ใช้ดึงชื่อและฝ่ายตอนคีย์รหัสพนักงานเข้าหลักสูตร · เพิ่มจำนวนมากได้ที่ นำเข้าพนักงาน (Excel)">
       <ExportMenu :handler="doExport" :pdf="false" />
       <button v-if="canEdit" class="btn primary" @click="open({})">+ เพิ่มพนักงาน</button>
     </PageHeader>

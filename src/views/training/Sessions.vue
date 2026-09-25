@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="บันทึกหลักสูตร / รุ่นอบรม" subtitle="กด + บันทึกหลักสูตรใหม่ → Part 1 ข้อมูลหลักสูตร → Part 2 คีย์รหัสพนักงาน · คลิกรายการเพื่อดู/แก้ไข หรือเพิ่มผู้เข้าอบรม">
+    <PageHeader title="บันทึกหลักสูตร / รุ่นอบรม" subtitle="หลักสูตรและรุ่นอบรมทั้งหมด — คลิกรายการเพื่อดูรายละเอียดหรือเพิ่มผู้เข้าอบรม">
       <ExportMenu :handler="doExport" :pdf="false" />
       <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ บันทึกหลักสูตรใหม่</RouterLink>
     </PageHeader>

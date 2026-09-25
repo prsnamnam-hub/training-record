@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHeader title="Audit Log" subtitle="บันทึกการสร้าง / แก้ไข / ลบ — Original Value, Updated Value, Updated By, Updated Date" crumb="Settings">
+    <PageHeader title="Audit Log" subtitle="บันทึกการสร้าง / แก้ไข / ลบ — Original Value, Updated Value, Updated By, Updated Date" >
       <ExportMenu :handler="doExport" :pdf="false" />
     </PageHeader>
     <div class="card">
