@@ -66,18 +66,18 @@ export function exportCSV(filename, columns, rows) {
   saveAs(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), filename)
 }
 
-export async function exportPDF(element, filename, { landscape = true } = {}) {
+export async function exportPDF(element, filename, { landscape = true, margin = [8, 8, 10, 8], avoid = ['.card', 'tr', '.kpi'] } = {}) {
   const { default: html2pdf } = await import('html2pdf.js')
   document.body.classList.add('pdf-exporting')
   try {
     await html2pdf()
       .set({
-        margin: [8, 8, 10, 8],
+        margin,
         filename,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: landscape ? 'landscape' : 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['.card', 'tr', '.kpi'] },
+        pagebreak: { mode: ['css', 'legacy'], avoid },
       })
       .from(element)
       .save()
