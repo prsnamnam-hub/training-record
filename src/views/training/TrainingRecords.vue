@@ -1,8 +1,9 @@
 <template>
   <div>
-    <PageHeader title="ประวัติการอบรม" subtitle="ประวัติการอบรมรายบุคคล — ข้อมูลย้อนหลังจาก Excel และข้อมูลใหม่ รวมในที่เดียว">
+    <PageHeader title="ประวัติการฝึกอบรม" subtitle="รายบุคคล — ข้อมูลย้อนหลังจาก Excel และข้อมูลที่บันทึกใหม่ รวมในที่เดียว">
       <ExportMenu :handler="doExport" :pdf="false" />
     </PageHeader>
+    <HistorySwitch />
     <div class="card">
       <div class="field mb"><label>ค้นหา</label>
         <input v-model="search" class="input" placeholder="รหัสพนักงาน / ชื่อพนักงาน / หลักสูตร / ฝ่าย / Provider" @input="debounced" /></div>
@@ -22,6 +23,7 @@
 </template>
 <script setup>
 import { onMounted, ref, watch } from 'vue'
+import HistorySwitch from '../../components/HistorySwitch.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import FilterBar from '../../components/FilterBar.vue'

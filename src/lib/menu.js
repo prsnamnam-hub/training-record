@@ -7,8 +7,9 @@ export const MENU = [
     { to: '/dashboard', label: 'Dashboard' },
   ] },
   { key: 'training', label: 'Training Record', prefixes: ['/training', '/expense'], items: [
-    { to: '/training/sessions', label: 'บันทึกหลักสูตร / รุ่นอบรม' },
-    { to: '/training/records', label: 'ประวัติการอบรม' },
+    { to: '/training/sessions/new', label: 'บันทึกฝึกอบรม', role: 'edit' },
+    // history = by-person records + by-course list (/training/sessions) and each course page
+    { to: '/training/records', label: 'ประวัติการฝึกอบรม', match: ['/training/sessions', '/training/participants'] },
     { to: '/training/calendar', label: 'ปฏิทินอบรม' },
     { to: '/expense/all', label: 'ค่าใช้จ่าย', match: '/expense/' },
   ] },

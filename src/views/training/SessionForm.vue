@@ -1,8 +1,8 @@
 <template>
   <div>
-    <PageHeader :title="isEdit ? 'แก้ไขข้อมูลหลักสูตร' : 'บันทึกหลักสูตรใหม่'"
+    <PageHeader :title="isEdit ? 'แก้ไขข้อมูลหลักสูตร' : 'บันทึกฝึกอบรม'"
       :subtitle="isEdit ? form.session_name : 'กรอกข้อมูลหลักสูตร แล้วบันทึก — ขั้นต่อไปคีย์รหัสพนักงานเพื่อเพิ่มผู้เข้าอบรม'">
-      <RouterLink :to="isEdit ? `/training/sessions/${id}` : '/training/sessions'" class="btn">ยกเลิก</RouterLink>
+      <RouterLink v-if="isEdit" :to="`/training/sessions/${id}`" class="btn">ยกเลิก</RouterLink>
     </PageHeader>
 
     <ol v-if="!isEdit" class="stepper">

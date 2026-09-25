@@ -5,7 +5,7 @@
         <button v-for="m in ['month', 'week', 'day']" :key="m" :class="{ on: view === m }" @click="view = m">{{ { month: 'เดือน', week: 'สัปดาห์', day: 'วัน' }[m] }}</button>
       </div>
       <button class="btn" @click="shift(-1)">‹</button><button class="btn" @click="cur = new Date()">วันนี้</button><button class="btn" @click="shift(1)">›</button>
-      <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ บันทึกหลักสูตรใหม่</RouterLink>
+      <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ บันทึกฝึกอบรม</RouterLink>
     </PageHeader>
     <div class="card">
       <h2 class="mb">{{ title }}</h2>

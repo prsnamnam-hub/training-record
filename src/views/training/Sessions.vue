@@ -1,9 +1,9 @@
 <template>
   <div>
-    <PageHeader title="บันทึกหลักสูตร / รุ่นอบรม" subtitle="หลักสูตรและรุ่นอบรมทั้งหมด — คลิกรายการเพื่อดูรายละเอียดหรือเพิ่มผู้เข้าอบรม">
+    <PageHeader title="ประวัติการฝึกอบรม" subtitle="รายหลักสูตร — คลิกรายการเพื่อดูรายละเอียด แก้ไข หรือเพิ่มผู้เข้าอบรม">
       <ExportMenu :handler="doExport" :pdf="false" />
-      <RouterLink v-if="canEdit" to="/training/sessions/new" class="btn primary">+ บันทึกหลักสูตรใหม่</RouterLink>
     </PageHeader>
+    <HistorySwitch />
     <div class="card">
       <div class="filterbar">
         <div class="field" style="max-width:none;flex:2"><label>ค้นหา</label>
@@ -30,6 +30,7 @@
 </template>
 <script setup>
 import { onMounted, ref, watch } from 'vue'
+import HistorySwitch from '../../components/HistorySwitch.vue'
 import PageHeader from '../../components/PageHeader.vue'
 import DataTable from '../../components/DataTable.vue'
 import MultiSelect from '../../components/MultiSelect.vue'

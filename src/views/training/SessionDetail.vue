@@ -2,7 +2,7 @@
   <div v-if="s">
     <PageHeader :title="s.session_name" :crumb="`${s.session_code || ''}${s.legacy_course_id ? ' · Excel ID ' + s.legacy_course_id : ''}`"
       :subtitle="`${s.course_name} · ${dateRange}`">
-      <RouterLink to="/training/sessions" class="btn">‹ กลับไปรายการ</RouterLink>
+      <RouterLink to="/training/sessions" class="btn">‹ ประวัติการฝึกอบรม</RouterLink>
       <RouterLink v-if="canEdit" :to="`/training/sessions/${s.id}/edit`" class="btn">แก้ไขข้อมูล</RouterLink>
       <button v-if="canEdit && s.status !== 'Cancelled'" class="btn danger" @click="cancel">ยกเลิกรอบอบรม</button>
     </PageHeader>
