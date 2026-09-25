@@ -34,14 +34,14 @@
         </nav>
         <RouterView :key="$route.fullPath" />
       </main>
-      <footer class="footer no-print">© {{ new Date().getFullYear() }} {{ APP_NAME }} — {{ APP_TAGLINE }}</footer>
+      <footer class="footer no-print">© {{ new Date().getFullYear() }} {{ APP_NAME }}</footer>
     </div>
   </div>
 </template>
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { APP_NAME, APP_TAGLINE } from '../lib/config'
+import { APP_NAME } from '../lib/config'
 import { auth, role, ROLE_LABEL, signOut, canEdit, isAdmin } from '../lib/auth'
 import { MENU, sectionOf, tabActive } from '../lib/menu'
 

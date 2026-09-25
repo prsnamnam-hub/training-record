@@ -1,10 +1,11 @@
 <template>
   <div class="login-wrap">
+    <header class="login-brand">
+      <img class="login-logo" :src="logo" alt="ASSET WISE" />
+      <div class="login-app">{{ APP_NAME }}</div>
+      <p class="login-tagline">แอสเซทไวส์ นิยามของการทำงานอย่างมี <b>“ความสุข”</b></p>
+    </header>
     <div class="login-card">
-      <div class="logo">
-        <img class="logo-img" :src="logo" alt="ASSET WISE" />
-        <div class="small muted" style="margin-top:6px">{{ APP_NAME }} — {{ APP_TAGLINE }}</div>
-      </div>
       <div class="tabs">
         <button :class="{ on: mode === 'in' }" @click="mode = 'in'">เข้าสู่ระบบ</button>
         <button :class="{ on: mode === 'up' }" @click="mode = 'up'">ลงทะเบียน</button>
@@ -28,10 +29,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { APP_NAME, APP_TAGLINE } from '../lib/config'
+import { APP_NAME } from '../lib/config'
 import { signIn, signUp, resetPassword } from '../lib/auth'
 
-const logo = import.meta.env.BASE_URL + 'logo-assetwise.png'
+const logo = import.meta.env.BASE_URL + 'logo-assetwise-stacked.png'
 
 const router = useRouter()
 const route = useRoute()
