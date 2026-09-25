@@ -1,7 +1,8 @@
 <template>
   <div>
     <PageHeader :title="page.title" :subtitle="page.subtitle" />
-    <ReportRunner :key="r.id" :group="r.group" :title="page.title" :metrics="r.metrics" :chart="r.chart || 'participants'" :file-prefix="r.file" />
+    <ReportRunner :key="r.id" :group="r.group" :title="page.title" :metrics="r.metrics" :chart="r.chart || 'participants'" :file-prefix="r.file"
+      :search="reportId === 'course' ? 'พิมพ์ชื่อหลักสูตร เช่น ปฐมนิเทศ, Leadership' : ''" />
   </div>
 </template>
 <script setup>

@@ -1,6 +1,9 @@
 <template>
   <div ref="page">
     <div class="card no-print">
+      <div v-if="search" class="field mb"><label>ค้นหาชื่อหลักสูตร</label>
+        <input v-model="searchText" class="input" :placeholder="search" @input="onSearch" />
+        <span v-if="searchText.trim()" class="small muted">พบ {{ searchIds.length }} หลักสูตรที่ชื่อตรงกับ "{{ searchText.trim() }}"</span></div>
       <FilterBar v-model="filters" :fields="filterFields" />
       <div class="row mt">
         <slot name="controls" />
@@ -50,9 +53,25 @@ const props = defineProps({
   chart: { type: String, default: 'participants' },
   filePrefix: { type: String, default: 'Training_Record_Report' },
   initialFilters: { type: Object, default: () => ({}) },
+  // placeholder text → show a course-name search box (report-wide: it becomes a course filter)
+  search: { type: String, default: '' },
 })
 const router = useRouter()
 const filters = ref({ ...props.initialFilters })
+// course-name search → course_ids filter, so KPIs, chart and totals follow the search too
+const searchText = ref(''); const courseOpts = ref([])
+const norm = (x) => String(x || '').toLowerCase().replace(/\s+/g, '')
+const searchIds = computed(() => { const t = norm(searchText.value); return t ? courseOpts.value.filter((c) => norm(c.name).includes(t)).map((c) => c.id) : [] })
+let searchTimer
+function onSearch() {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    const f = { ...filters.value }
+    if (searchText.value.trim()) f.course_ids = searchIds.value.length ? searchIds.value : [-1] // -1 = nothing matches
+    else delete f.course_ids
+    filters.value = f
+  }, 300)
+}
 const raw = ref([]); const loading = ref(false); const err = ref(''); const page = ref(null)
 const headcount = ref({})
 const filterFields = ['years', 'months', 'date_from', 'date_to', 'companies', 'business_groups', 'departments', 'sections', 'level_groups', 'training_types', 'categories', 'courses', 'providers', 'trainers']
@@ -126,7 +145,7 @@ onMounted(async () => {
     const emp = await fetchAll(supabase.from('employees').select('department_id').eq('employment_status', 'Active').is('deleted_at', null))
     const m = {}; emp.forEach((e) => { m[e.department_id] = (m[e.department_id] || 0) + 1 }); headcount.value = m
   }
-  await filterOptions()
+  courseOpts.value = (await filterOptions()).courses || []
   load()
 })
 function drill(r) {
